@@ -1,6 +1,6 @@
 import { preprocess } from './lib/preprocess.ts';
 import { existsSync, mkdirSync } from 'node:fs';
-import { appendFile, copyFile, readFile, rm, writeFile } from 'node:fs/promises';
+import { appendFile, copyFile, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 const DICTIONARY_DIR = 'data/';
@@ -37,6 +37,7 @@ const downloadFullDictionary = async (): Promise<void> => {
 		console.log(`Reusing dump at ${COMBINED_PATH}`);
 		return;
 	}
+	await mkdir(DICTIONARY_DIR);
 	await Promise.all(
 		[
 			[HANZI_URL, HANZI_PATH],
