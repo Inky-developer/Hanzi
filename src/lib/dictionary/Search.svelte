@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { type Dictionary } from '$lib/dictionary/dictionary';
-	import { type DictEntry, dictEntryCommon, dictEntryEq } from '$lib/dictionary/types';
+	import { type DictEntry, dictEntryEq } from '$lib/dictionary/types';
+	import { removeToneMarks } from '$lib/dictionary/pinyin';
 
 	const {
 		dictionary,
@@ -33,9 +34,10 @@
 	};
 
 	const getMatchLength = (pinyin: string): number => {
-		const q = query.trim();
+		const q = removeToneMarks(query.trim().toLowerCase());
+		const p = removeToneMarks(pinyin.trim().toLowerCase());
 		for (let i = 0; i < q.length; i++) {
-			if (i >= pinyin.length || pinyin.charCodeAt(i) !== q.charCodeAt(i)) return i;
+			if (i >= p.length || p.charCodeAt(i) !== q.charCodeAt(i)) return i;
 		}
 		return q.length;
 	};
@@ -85,9 +87,8 @@
 	{/if}
 
 	<ol class="scroll-thin min-h-0 flex-1 overflow-y-auto overscroll-contain p-1.5 max-md:max-h-64">
-		{#each shown as result (result)}
+		{#each shown as result (result.item.text)}
 			{@const active = isSelected(result)}
-			{@const common = dictEntryCommon(result)}
 			<li>
 				<button
 					type="button"
@@ -97,10 +98,10 @@
 						{active ? 'bg-ink-600/10 dark:bg-ink-600/25' : ''}"
 				>
 					<span class="min-w-0 flex-1 truncate">
-						{common.text}
+						{result.item.text}
 					</span>
 					<span class="inline-flex shrink-0 gap-2 rounded px-1.5 py-0.5 text-[0.65rem] font-medium">
-						{#each common.pinyins as pinyin (pinyin)}
+						{#each result.item.pinyins as pinyin (pinyin)}
 							{@const matchLength = getMatchLength(pinyin)}
 							{#if matchLength > 0}
 								<span>

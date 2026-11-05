@@ -1,9 +1,9 @@
 import { Dictionary } from '$lib/dictionary/dictionary';
-import type { StorageData } from '$lib/dictionary/types';
 import data from '$lib/generated/data.json';
+import type { DictEntry } from '$lib/dictionary/types';
 
 export const prerender = true;
 
 export const load = () => ({
-	dictionary: Dictionary.fromStorage(data as StorageData)
+	dictionary: Dictionary.fromStorage(data as DictEntry[])
 });

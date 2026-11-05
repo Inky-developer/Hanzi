@@ -14,5 +14,4 @@ On a first time installation, the wiktionary data will be downloaded and extract
 
 ## Data
 
-- dictionary_char.jsonl: TODO find source, detailed hanzi data
-- CC-CEDICT: Word data
+- hanzi and word data from data.dong-chinese.com

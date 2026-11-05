@@ -1,16 +1,10 @@
-import type { DictEntry, Hanzi, StorageData } from '$lib/dictionary/types';
+import type { DictEntry, Hanzi } from '$lib/dictionary/types';
+import { removeToneMarks } from '$lib/dictionary/pinyin';
 
 type SearchIndex = {
 	pinyin: string;
 	dictIndexes: number[];
 };
-
-/** Converts e.g. "shì" to "shi" and "lǜ" to "lu". */
-const removeToneMarks = (pinyin: string): string =>
-	pinyin
-		.normalize('NFD')
-		.replace(/\p{Diacritic}/gu, '')
-		.toLowerCase();
 
 export class Dictionary {
 	constructor(
@@ -21,20 +15,16 @@ export class Dictionary {
 		readonly searchIndex: SearchIndex[]
 	) {}
 
-	static fromStorage(data: StorageData): Dictionary {
-		const buildHanziIndex = (hanzi: Hanzi[]): Record<string, number> =>
-			Object.fromEntries(hanzi.map((hanzi, index) => [hanzi.symbol, index]));
-
-		const buildEntries = (data: StorageData): DictEntry[] => {
-			const hanzi: DictEntry[] = data.hanzi.map((it) => ({ type: 'hanzi', hanzi: it }));
-			const words: DictEntry[] = data.words.map((it) => ({ type: 'word', word: it }));
-			return [...hanzi, ...words];
-		};
+	static fromStorage(data: DictEntry[]): Dictionary {
+		const buildHanziIndex = (data: DictEntry[]): Record<string, number> =>
+			Object.fromEntries(
+				data.filter((it) => it.type == 'hanzi').map((entry, index) => [entry.item.text, index])
+			);
 
 		const buildSearchIndex = (entries: DictEntry[]): SearchIndex[] => {
 			const searchIndex: Record<string, number[]> = {};
 			entries.forEach((entry, index) => {
-				const pinyins = entry.type === 'word' ? [entry.word.pinyin] : entry.hanzi.pinyins;
+				const pinyins = entry.item.pinyins;
 				const spellings = new Set(pinyins.map((text) => removeToneMarks(text)));
 				for (const pinyin of spellings) {
 					if (searchIndex[pinyin] === undefined) {
@@ -49,10 +39,9 @@ export class Dictionary {
 			}));
 		};
 
-		const hanziIndex = buildHanziIndex(data.hanzi);
-		const entries = buildEntries(data);
-		const searchIndex = buildSearchIndex(entries);
-		return new Dictionary(entries, hanziIndex, searchIndex);
+		const hanziIndex = buildHanziIndex(data);
+		const searchIndex = buildSearchIndex(data);
+		return new Dictionary(data, hanziIndex, searchIndex);
 	}
 
 	lookup(hanzi: string): Hanzi | null {
@@ -65,7 +54,7 @@ export class Dictionary {
 			// Should not happen
 			return null;
 		}
-		return entry.hanzi;
+		return entry.item;
 	}
 
 	search(query: string): DictEntry[] {

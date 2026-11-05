@@ -1,4 +1,4 @@
-import { type Hanzi } from '../../src/lib/dictionary/types.ts';
+import type { DictEntry, Hanzi, Word } from '../../src/lib/dictionary/types.ts';
 import readLines from './readLines.ts';
 
 type Source = 'unicode' | 'academia-sinica' | 'makemeahanzi' | 'baxter-sagart' | 'dong-chinese';
@@ -77,7 +77,7 @@ type CharacterStatistics = {
 	pinyinFrequency?: number;
 };
 
-type CharacterEntry = {
+type Entry = {
 	_id: string;
 	char: string;
 	// e.g. "U+3806"
@@ -117,26 +117,85 @@ type WordEntry = {
 	gloss: string;
 	items: {
 		source?: 'unicode' | 'cedict';
-		pinyin: string;
+		pinyin?: string;
 		simpTrad?: 'both';
-		definitions: string[];
+		definitions?: string[];
 	}[];
 	pinyinSearchString: string;
 	statistics?: CharacterStatistics;
 };
 
-type DictionaryEntry = CharacterEntry | WordEntry;
+type DictionaryEntry = Entry | WordEntry;
 
 /** Some common characters like 更 are marked as variants of obscure forms, so HSK characters are kept. */
-const isNonHskVariant = (entry: CharacterEntry): boolean =>
+const isNonHskVariant = (entry: Entry): boolean =>
 	entry.variantOf !== undefined && entry.statistics?.hskLevel === undefined;
 
 /** Characters like 后 list themselves as their own simplified form and are kept. */
-const isTraditionalOnly = (entry: CharacterEntry): boolean =>
+const isTraditionalOnly = (entry: Entry): boolean =>
 	entry.simpVariants !== undefined && !entry.simpVariants.includes(entry.char);
 
-export default async (dictionaryPath: string): Promise<Hanzi[]> => {
-	const result: Hanzi[] = [];
+const parseChar = (entry: Entry): Hanzi | null => {
+	if (isNonHskVariant(entry) || isTraditionalOnly(entry)) {
+		return null;
+	}
+
+	const frequency = entry.statistics?.bookCharCountPercent ?? null;
+	if (frequency === null) {
+		return null;
+	}
+
+	const pinyins =
+		entry?.pinyinFrequencies?.map((it) => ({
+			text: it.pinyin,
+			frequency: it.count
+		})) ?? [];
+	pinyins.sort((a, b) => b.frequency - a.frequency);
+
+	return {
+		text: entry.char,
+		frequency,
+		pinyins: pinyins.map((it) => it.text),
+		english: [entry?.gloss ?? ''],
+		characterHint: entry?.hint ?? '',
+		hskLevel: entry?.statistics?.hskLevel ?? null
+	};
+};
+
+const parseWord = (entry: WordEntry): Word | null => {
+	if (Array.from(entry.simp).length <= 1) {
+		// Don't include characters for now
+		// TODO: Merge english and other attributes with character data, as words have better quality
+		return null;
+	}
+
+	const frequency = entry.statistics?.bookWordCountPercent ?? null;
+	if (frequency === null) {
+		return null;
+	}
+
+	const pinyins = new Set(
+		entry.items.flatMap((it) => (it.pinyin === undefined ? [] : [it.pinyin.replaceAll('​', ' ')]))
+	);
+	// TODO: Parse classifiers (number words, instead of stripping them)
+	const english = new Set(
+		entry.items.flatMap((it) => it.definitions ?? []).filter((it) => !it.startsWith('CL:'))
+	);
+	return { text: entry.simp, pinyins: [...pinyins], english: [...english], frequency };
+};
+
+// Sometimes words are duplicated and only differ in the traditional text.
+// Their frequency statistics are the same, so the frequencies shouldn't be added.
+const mergeWords = (lhs: Word, rhs: Word): Word => ({
+	text: lhs.text,
+	pinyins: [...new Set([...lhs.pinyins, ...rhs.pinyins])],
+	english: [...new Set([...lhs.english, ...rhs.english])],
+	frequency: Math.max(lhs.frequency, rhs.frequency)
+});
+
+export default async (dictionaryPath: string): Promise<DictEntry[]> => {
+	const entries: DictEntry[] = [];
+	const words = new Map<string, Word>();
 
 	let lineNumber = 0;
 	const startTime = performance.now();
@@ -155,40 +214,23 @@ export default async (dictionaryPath: string): Promise<Hanzi[]> => {
 			throw new Error(`Unable to parse Wiktionary entry at line ${lineNumber}: ${e}`, { cause: e });
 		}
 
-		if (!('char' in entry) || isNonHskVariant(entry) || isTraditionalOnly(entry)) {
-			return;
+		if ('char' in entry) {
+			const hanzi = parseChar(entry);
+			if (hanzi !== null) entries.push({ type: 'hanzi', item: hanzi });
+		} else {
+			const word = parseWord(entry);
+			if (word !== null) {
+				const existing = words.get(word.text);
+				words.set(word.text, existing === undefined ? word : mergeWords(existing, word));
+			}
 		}
-
-		const frequency = entry.statistics?.bookCharCount ?? null;
-		if (frequency === null) {
-			return;
-		}
-
-		const pinyins =
-			entry?.pinyinFrequencies?.map((it) => ({
-				text: it.pinyin,
-				frequency: it.count
-			})) ?? [];
-		pinyins.sort((a, b) => b.frequency - a.frequency);
-
-		// if (frequency !== null && frequency == 2615490) {
-		// 	console.log(entry);
-		// }
-
-		result.push({
-			symbol: entry.char,
-			frequency,
-			pinyins: pinyins.map((it) => it.text),
-			english: entry?.gloss ?? '',
-			characterHint: entry?.hint ?? '',
-			hskLevel: entry?.statistics?.hskLevel ?? null
-		});
 	});
 
-	result.sort((a, b) => b.frequency - a.frequency);
+	entries.push(...words.values().map((it) => ({ type: 'word', item: it }) as const));
+	entries.sort((a, b) => b.item.frequency - a.item.frequency);
 
 	console.log(`Finished in ${(performance.now() - startTime) / 1000} s`);
-	console.log(`${result.length} entries`);
+	console.log(`${entries.length} entries`);
 
-	return result;
+	return entries;
 };

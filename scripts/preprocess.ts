@@ -1,36 +1,52 @@
 import { preprocess } from './lib/preprocess.ts';
-import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync } from 'node:fs';
-import { rename, rm, writeFile } from 'node:fs/promises';
+import { appendFile, copyFile, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 const DICTIONARY_DIR = 'data/';
-const DICTIONARY_PATH = join(DICTIONARY_DIR, 'dictionary_char.jsonl');
-const CCDICT_PATH = join(DICTIONARY_DIR, 'ccd_char.u8');
+const HANZI_PATH = join(DICTIONARY_DIR, 'dictionary_char.jsonl');
+const WORD_PATH = join(DICTIONARY_DIR, 'dictionary_word.jsonl');
+const COMBINED_PATH = join(DICTIONARY_DIR, 'dictionary.jsonl');
 
-const CCDICT_URL = 'https://www.mdbg.net/chinese/export/cedict/cedict_1_0_ts_utf-8_mdbg.zip';
-const CCDICT_ZIP_PATH = join(DICTIONARY_DIR, 'cedict.zip');
-const CCDICT_ZIP_ENTRY = 'cedict_ts.u8';
+const HANZI_URL = 'https://data.dong-chinese.com/dump/dictionary_char_2025-12-27.jsonl';
+const WORD_URL = 'https://data.dong-chinese.com/dump/dictionary_word_2025-12-27.jsonl';
 
-const downloadCCDict = async (): Promise<void> => {
-	if (existsSync(CCDICT_PATH)) {
-		console.log(`Reusing CCDICT dump at ${CCDICT_PATH}`);
+const downloadDict = async (url: string, path: string): Promise<void> => {
+	if (existsSync(path)) {
+		console.log(`Reusing dump at ${path}`);
 		return;
 	}
 
-	const response = await fetch(CCDICT_URL);
+	const response = await fetch(url);
 	if (!response.ok) {
-		throw new Error(`Unable to download ${CCDICT_URL}: ${response.status} ${response.statusText}`);
+		throw new Error(`Unable to download ${url}: ${response.status} ${response.statusText}`);
 	}
 
-	console.log(`Downloading CC-CEDICT dump to ${CCDICT_PATH}`);
-	await writeFile(CCDICT_ZIP_PATH, Buffer.from(await response.arrayBuffer()));
-	execFileSync('unzip', ['-o', CCDICT_ZIP_PATH, CCDICT_ZIP_ENTRY, '-d', DICTIONARY_DIR]);
-	await rename(join(DICTIONARY_DIR, CCDICT_ZIP_ENTRY), CCDICT_PATH);
-	await rm(CCDICT_ZIP_PATH);
+	console.log(`Downloading dump to ${path}`);
+	await writeFile(path, Buffer.from(await response.arrayBuffer()));
 };
 
-await downloadCCDict();
-const words = await preprocess(DICTIONARY_PATH, CCDICT_PATH);
+const combine = async () => {
+	await copyFile(HANZI_PATH, COMBINED_PATH);
+	await appendFile(COMBINED_PATH, await readFile(WORD_PATH));
+	await Promise.all([HANZI_PATH, WORD_PATH].map((it) => rm(it)));
+};
+
+const downloadFullDictionary = async (): Promise<void> => {
+	if (existsSync(COMBINED_PATH)) {
+		console.log(`Reusing dump at ${COMBINED_PATH}`);
+		return;
+	}
+	await Promise.all(
+		[
+			[HANZI_URL, HANZI_PATH],
+			[WORD_URL, WORD_PATH]
+		].map(([url, path]) => downloadDict(url, path))
+	);
+	await combine();
+};
+
+await downloadFullDictionary();
+const words = await preprocess(COMBINED_PATH);
 mkdirSync('src/lib/generated', { recursive: true });
 await writeFile('src/lib/generated/data.json', JSON.stringify(words));
