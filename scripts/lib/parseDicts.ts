@@ -163,12 +163,6 @@ const parseChar = (entry: Entry): Hanzi | null => {
 };
 
 const parseWord = (entry: WordEntry): Word | null => {
-	if (Array.from(entry.simp).length <= 1) {
-		// Don't include characters for now
-		// TODO: Merge english and other attributes with character data, as words have better quality
-		return null;
-	}
-
 	const frequency = entry.statistics?.bookWordCountPercent ?? null;
 	if (frequency === null) {
 		return null;
@@ -193,9 +187,19 @@ const mergeWords = (lhs: Word, rhs: Word): Word => ({
 	frequency: Math.max(lhs.frequency, rhs.frequency)
 });
 
+/**
+ * Expands the hanzi character information with word definitions
+ */
+const expandHanziWithWord = (hanzi: Hanzi, word: Word): Hanzi => {
+	return {
+		...hanzi,
+		english: word.english ?? hanzi.english
+	};
+};
+
 export default async (dictionaryPath: string): Promise<DictEntry[]> => {
-	const entries: DictEntry[] = [];
-	const words = new Map<string, Word>();
+	const chars: Hanzi[] = [];
+	const words: Map<string, Word> = new Map();
 
 	let lineNumber = 0;
 	const startTime = performance.now();
@@ -216,7 +220,7 @@ export default async (dictionaryPath: string): Promise<DictEntry[]> => {
 
 		if ('char' in entry) {
 			const hanzi = parseChar(entry);
-			if (hanzi !== null) entries.push({ type: 'hanzi', item: hanzi });
+			if (hanzi !== null) chars.push(hanzi);
 		} else {
 			const word = parseWord(entry);
 			if (word !== null) {
@@ -226,7 +230,19 @@ export default async (dictionaryPath: string): Promise<DictEntry[]> => {
 		}
 	});
 
-	entries.push(...words.values().map((it) => ({ type: 'word', item: it }) as const));
+	const combinedChars = chars.map((hanzi) => {
+		const hanziWord = words.get(hanzi.text);
+		if (hanziWord === undefined) return hanzi;
+		return expandHanziWithWord(hanzi, hanziWord);
+	});
+
+	const entries: DictEntry[] = [
+		...combinedChars.map((it): DictEntry => ({ type: 'hanzi', item: it })),
+		...words
+			.values()
+			.filter((it) => Array.from(it.text).length > 1)
+			.map((it): DictEntry => ({ type: 'word', item: it }))
+	];
 	entries.sort((a, b) => b.item.frequency - a.item.frequency);
 
 	console.log(`Finished in ${(performance.now() - startTime) / 1000} s`);
