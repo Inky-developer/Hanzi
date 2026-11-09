@@ -2,6 +2,7 @@
 	import { type DictEntry } from '$lib/dictionary/types';
 	import type { Dictionary } from '$lib/dictionary/dictionary';
 	import Hanzi from '$lib/dictionary/Hanzi.svelte';
+	import DictionarySection from '$lib/components/DictionarySection.svelte';
 
 	// eslint-disable-next-line svelte/no-unused-props
 	const {
@@ -22,13 +23,12 @@
 	</header>
 
 	<div class="scroll-thin flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-6 py-4">
+		<DictionarySection title="Simplified">
+			{entry.item.text}
+		</DictionarySection>
+
 		{#if entry.item.pinyins.length > 0}
-			<section>
-				<h3
-					class="mb-1 text-xs font-medium tracking-wide text-paper-500 uppercase dark:text-paper-400"
-				>
-					Pinyin
-				</h3>
+			<DictionarySection title="Pinyin">
 				<ul
 					class="flex flex-wrap items-baseline gap-x-1.5 font-serif text-paper-700 dark:text-paper-300"
 				>
@@ -40,16 +40,11 @@
 						</li>
 					{/each}
 				</ul>
-			</section>
+			</DictionarySection>
 		{/if}
 
 		{#if entry.item.english.length > 0}
-			<section>
-				<h3
-					class="mb-1 text-xs font-medium tracking-wide text-paper-500 uppercase dark:text-paper-400"
-				>
-					Meanings
-				</h3>
+			<DictionarySection title="Meanings">
 				<ul
 					lang="en"
 					class="flex flex-wrap items-baseline gap-x-1.5 font-serif text-paper-700 italic dark:text-paper-300"
@@ -62,7 +57,7 @@
 						</li>
 					{/each}
 				</ul>
-			</section>
+			</DictionarySection>
 		{/if}
 	</div>
 </article>
