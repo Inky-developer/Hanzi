@@ -18,7 +18,7 @@ export class Dictionary {
 	static fromStorage(data: DictEntry[]): Dictionary {
 		const buildHanziIndex = (data: DictEntry[]): Record<string, number> =>
 			Object.fromEntries(
-				data.filter((it) => it.type == 'hanzi').map((entry, index) => [entry.item.text, index])
+				data.flatMap((entry, index) => (entry.type === 'hanzi' ? [[entry.item.text, index]] : []))
 			);
 
 		const buildSearchIndex = (entries: DictEntry[]): SearchIndex[] => {

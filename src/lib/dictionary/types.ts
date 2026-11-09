@@ -24,7 +24,18 @@ export type Common = {
 
 export type Word = Common;
 
+/**
+ * Stroke graphics in the makeMeAHanzi format: https://github.com/skishore/makemeahanzi/tree/master#graphicstxt-keys.
+ * The strokes are svg instructions for drawing the character and the medians are a list of points per stroke that is
+ * used for animation the character.
+ */
+export type StrokeData = {
+	strokes: string[];
+	medians: [number, number][][];
+};
+
 export type Hanzi = Common & {
 	characterHint: string;
 	hskLevel: number | null;
+	strokeData?: StrokeData;
 };

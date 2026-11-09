@@ -1,9 +1,9 @@
-import type { DictEntry, Hanzi, Word } from '../../src/lib/dictionary/types.ts';
+import type { DictEntry, Hanzi, StrokeData, Word } from '../../src/lib/dictionary/types.ts';
 import readLines from './readLines.ts';
 
 type Source = 'unicode' | 'academia-sinica' | 'makemeahanzi' | 'baxter-sagart' | 'dong-chinese';
 
-type StrokeData = {
+type DictStrokeData = {
 	/** SVG path per stroke */
 	strokes: string[];
 	/** Median points ([x, y]) per stroke */
@@ -16,7 +16,7 @@ type CharacterImage = {
 	description: string;
 	type: 'Oracle' | 'Bronze' | 'Seal' | 'Clerical' | 'Regular';
 	era: string;
-	data?: StrokeData;
+	data?: DictStrokeData;
 	/** Stroke indices per component */
 	fragments?: number[][];
 };
@@ -100,7 +100,7 @@ type Entry = {
 	}[];
 	components?: CharacterComponent[];
 	images?: CharacterImage[] | null;
-	data?: (StrokeData & { character?: string }) | null;
+	data?: (DictStrokeData & { character?: string }) | null;
 	fragments?: number[][] | null;
 	comments?: { source: 'academia-sinica'; text: string }[];
 	// Formatted as "name|url"
@@ -152,13 +152,22 @@ const parseChar = (entry: Entry): Hanzi | null => {
 		})) ?? [];
 	pinyins.sort((a, b) => b.frequency - a.frequency);
 
+	const sourceStrokeData =
+		entry?.data ??
+		entry?.images?.find((img) => img.type === 'Regular' && img.data !== undefined)?.data;
+	const strokeData: StrokeData | undefined = sourceStrokeData && {
+		strokes: sourceStrokeData.strokes,
+		medians: sourceStrokeData.medians
+	};
+
 	return {
 		text: entry.char,
 		frequency,
 		pinyins: pinyins.map((it) => it.text),
 		english: [entry?.gloss ?? ''],
 		characterHint: entry?.hint ?? '',
-		hskLevel: entry?.statistics?.hskLevel ?? null
+		hskLevel: entry?.statistics?.hskLevel ?? null,
+		strokeData
 	};
 };
 
@@ -215,7 +224,7 @@ export default async (dictionaryPath: string): Promise<DictEntry[]> => {
 			console.error(`length ${line.length}`);
 			console.error(`head ${JSON.stringify(line.slice(0, 120))}`);
 			console.error(`tail ${JSON.stringify(line.slice(-120))}`);
-			throw new Error(`Unable to parse Wiktionary entry at line ${lineNumber}: ${e}`, { cause: e });
+			throw new Error(`Unable to parse dictionary entry at line ${lineNumber}: ${e}`, { cause: e });
 		}
 
 		if ('char' in entry) {
