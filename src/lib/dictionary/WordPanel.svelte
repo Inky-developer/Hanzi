@@ -3,6 +3,7 @@
 	import type { Dictionary } from '$lib/dictionary/dictionary';
 	import Hanzi from '$lib/dictionary/Hanzi.svelte';
 	import DictionarySection from '$lib/components/DictionarySection.svelte';
+	import { resolve } from '$app/paths';
 
 	const { entry, dictionary }: { entry: DictEntry; dictionary: Dictionary } = $props();
 
@@ -20,7 +21,11 @@
 
 	<div class="scroll-thin flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-6 py-4">
 		<DictionarySection title="Simplified">
-			{entry.item.text}
+			{#each Array.from(entry.item.text) as char, index (index)}
+				<a class="hover:underline" href={resolve('/dict/[word]', { word: char })}>
+					{char}
+				</a>
+			{/each}
 		</DictionarySection>
 
 		{#if entry.item.pinyins.length > 0}
