@@ -1,6 +1,6 @@
 # hanzi
 
-SPA for learning Hanzi. Accessible at [here](https://inky-developer.github.io/Hanzi/).
+SPA for learning Hanzi. Accessible [here](https://inky-developer.github.io/Hanzi/).
 
 ## Developing
 
