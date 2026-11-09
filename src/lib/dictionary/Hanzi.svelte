@@ -37,51 +37,6 @@
 	});
 </script>
 
-<style>
-    .helper-lines {
-        stroke: var(--color-paper-200);
-    }
-
-    @media (prefers-color-scheme: dark) {
-        .helper-lines {
-            stroke: var(--color-paper-800);
-        }
-    }
-
-    .glyph-outline {
-        fill: currentColor;
-        opacity: 0.25;
-    }
-
-    .glyph-median {
-        fill: none;
-        stroke: currentColor;
-        stroke-linecap: round;
-        stroke-width: var(--median-stroke-width);
-        stroke-dasharray: var(--length) calc(var(--length) + 2 * var(--median-stroke-width));
-        animation-name: draw-stroke;
-        animation-timing-function: linear;
-        animation-fill-mode: both;
-    }
-
-    @keyframes draw-stroke {
-        from {
-            stroke-dashoffset: calc(var(--length) + var(--median-stroke-width));
-        }
-        to {
-            stroke-dashoffset: 0;
-        }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-        .glyph-median {
-            animation-name: none;
-            stroke-dashoffset: 0;
-        }
-    }
-</style>
-
-
 {#if animatedStrokes !== undefined}
 	<button
 		type="button"
@@ -130,3 +85,47 @@
 		{char}
 	</h2>
 {/if}
+
+<style>
+	.helper-lines {
+		stroke: var(--color-paper-200);
+	}
+
+	@media (prefers-color-scheme: dark) {
+		.helper-lines {
+			stroke: var(--color-paper-800);
+		}
+	}
+
+	.glyph-outline {
+		fill: currentColor;
+		opacity: 0.25;
+	}
+
+	.glyph-median {
+		fill: none;
+		stroke: currentColor;
+		stroke-linecap: round;
+		stroke-width: var(--median-stroke-width);
+		stroke-dasharray: var(--length) calc(var(--length) + 2 * var(--median-stroke-width));
+		animation-name: draw-stroke;
+		animation-timing-function: linear;
+		animation-fill-mode: both;
+	}
+
+	@keyframes draw-stroke {
+		from {
+			stroke-dashoffset: calc(var(--length) + var(--median-stroke-width));
+		}
+		to {
+			stroke-dashoffset: 0;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.glyph-median {
+			animation-name: none;
+			stroke-dashoffset: 0;
+		}
+	}
+</style>
