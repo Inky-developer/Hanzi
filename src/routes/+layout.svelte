@@ -1,8 +1,11 @@
 <script lang="ts">
 	import Header from './Header.svelte';
 	import './layout.css';
+	import { SearchState, setSearchState } from '$lib/dictionary/searchState.svelte';
 
 	let { children, data } = $props();
+
+	setSearchState(new SearchState());
 </script>
 
 <div class="flex min-h-screen flex-col">

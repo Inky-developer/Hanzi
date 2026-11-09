@@ -1,5 +1,5 @@
 <script lang="ts">
-	import DictionaryComponent from '$lib/dictionary/Dictionary.svelte';
+	import Search from '$lib/dictionary/Search.svelte';
 
 	let { data } = $props();
 </script>
@@ -18,5 +18,5 @@
 		</h1>
 	</div>
 
-	<DictionaryComponent data={data.dictionary} />
+	<Search dictionary={data.dictionary} selected={null} />
 </section>

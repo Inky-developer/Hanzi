@@ -10,7 +10,7 @@
 	const { char, dictionary }: { char: string; dictionary: Dictionary } = $props();
 	const id = $props.id();
 
-	const hanzi = $derived(dictionary.lookup(char));
+	const hanzi = $derived(dictionary.lookupHanzi(char));
 	let replayCount = $state(0);
 
 	const distance = ([x1, y1]: Point, [x2, y2]: Point): number => Math.hypot(x2 - x1, y2 - y1);

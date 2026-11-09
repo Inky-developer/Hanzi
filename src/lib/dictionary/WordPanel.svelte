@@ -4,11 +4,7 @@
 	import Hanzi from '$lib/dictionary/Hanzi.svelte';
 	import DictionarySection from '$lib/components/DictionarySection.svelte';
 
-	// eslint-disable-next-line svelte/no-unused-props
-	const {
-		entry,
-		dictionary
-	}: { entry: DictEntry; onEntry: (entry: DictEntry) => void; dictionary: Dictionary } = $props();
+	const { entry, dictionary }: { entry: DictEntry; dictionary: Dictionary } = $props();
 
 	const hanzis = $derived(Array.from(entry.item.text));
 </script>

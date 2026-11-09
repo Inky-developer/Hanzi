@@ -4,8 +4,7 @@
 	import WordPanel from '$lib/dictionary/WordPanel.svelte';
 	import type { DictEntry } from '$lib/dictionary/types';
 
-	const { data: dictionary }: { data: Dictionary } = $props();
-	let currentEntry: DictEntry | null = $state(null);
+	const { dictionary, entry }: { dictionary: Dictionary; entry: DictEntry | null } = $props();
 </script>
 
 <div
@@ -14,24 +13,12 @@
 	<div
 		class="flex min-h-0 flex-col border-b border-paper-200 md:w-72 md:shrink-0 md:border-r md:border-b-0 dark:border-paper-800"
 	>
-		<Search
-			{dictionary}
-			selected={currentEntry}
-			onSelect={(entry) => {
-				currentEntry = entry;
-			}}
-		/>
+		<Search {dictionary} selected={entry} />
 	</div>
 
 	<div class="flex min-h-0 flex-1 flex-col">
-		{#if currentEntry !== null}
-			<WordPanel
-				{dictionary}
-				entry={currentEntry}
-				onEntry={(entry) => {
-					currentEntry = entry;
-				}}
-			/>
+		{#if entry !== null}
+			<WordPanel {dictionary} {entry} />
 		{:else}
 			<div class="grid flex-1 place-items-center px-6 py-14 text-paper-500 dark:text-paper-400">
 				<div class="max-w-xs text-center">

@@ -2,21 +2,23 @@
 	import { type Dictionary } from '$lib/dictionary/dictionary';
 	import { type DictEntry, dictEntryEq } from '$lib/dictionary/types';
 	import { removeToneMarks } from '$lib/dictionary/pinyin';
+	import { resolve } from '$app/paths';
+	import { getSearchState } from '$lib/dictionary/searchState.svelte';
+	import { goto } from '$app/navigation';
 
 	const {
 		dictionary,
-		selected,
-		onSelect
+		selected
 	}: {
 		dictionary: Dictionary;
 		selected: DictEntry | null;
-		onSelect: (entry: DictEntry) => void;
 	} = $props();
 
 	/** Rendering every match of a one-letter query would mean thousands of nodes. */
 	const MAX_RESULTS = 100;
 
-	let query = $state('');
+	const search = getSearchState();
+	const query = $derived(search.query);
 
 	const results: DictEntry[] = $derived.by(() => {
 		const trimmed = query.trim();
@@ -30,7 +32,7 @@
 	const onKeyDown = (event: KeyboardEvent) => {
 		if (event.key !== 'Enter' || shown.length === 0) return;
 		event.preventDefault();
-		onSelect(shown[0]);
+		goto(resolve('/dict/[word]', { word: shown[0].item.text }));
 	};
 
 	const getMatchLength = (pinyin: string): number => {
@@ -59,7 +61,7 @@
 				<path d="m20 20-3.5-3.5" />
 			</svg>
 			<input
-				bind:value={query}
+				bind:value={search.query}
 				onkeydown={onKeyDown}
 				type="search"
 				autocomplete="off"
@@ -90,9 +92,8 @@
 		{#each shown as result (result.item.text)}
 			{@const active = isSelected(result)}
 			<li>
-				<button
-					type="button"
-					onclick={() => onSelect(result)}
+				<a
+					href={resolve('/dict/[word]', { word: result.item.text })}
 					aria-current={active ? 'true' : undefined}
 					class="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-paper-100 dark:hover:bg-paper-800/60
 						{active ? 'bg-ink-600/10 dark:bg-ink-600/25' : ''}"
@@ -115,7 +116,7 @@
 							{/if}
 						{/each}
 					</span>
-				</button>
+				</a>
 			</li>
 		{/each}
 

@@ -9,17 +9,15 @@ type SearchIndex = {
 export class Dictionary {
 	constructor(
 		readonly entries: DictEntry[],
-		// Index hanzi -> index
-		readonly hanziIndex: Record<string, number>,
+		// Index chinese -> index
+		readonly wordIndex: Record<string, number>,
 		// Index pinyin -> index
 		readonly searchIndex: SearchIndex[]
 	) {}
 
 	static fromStorage(data: DictEntry[]): Dictionary {
-		const buildHanziIndex = (data: DictEntry[]): Record<string, number> =>
-			Object.fromEntries(
-				data.flatMap((entry, index) => (entry.type === 'hanzi' ? [[entry.item.text, index]] : []))
-			);
+		const buildWordIndex = (data: DictEntry[]): Record<string, number> =>
+			Object.fromEntries(data.map((entry, index) => [entry.item.text, index]));
 
 		const buildSearchIndex = (entries: DictEntry[]): SearchIndex[] => {
 			const searchIndex: Record<string, number[]> = {};
@@ -39,26 +37,29 @@ export class Dictionary {
 			}));
 		};
 
-		const hanziIndex = buildHanziIndex(data);
+		const wordIndex = buildWordIndex(data);
 		const searchIndex = buildSearchIndex(data);
-		return new Dictionary(data, hanziIndex, searchIndex);
+		return new Dictionary(data, wordIndex, searchIndex);
 	}
 
-	lookup(hanzi: string): Hanzi | null {
-		const index = this.hanziIndex[hanzi];
+	lookup(word: string): DictEntry | null {
+		const index = this.wordIndex[word];
 		if (index === undefined) {
 			return null;
 		}
-		const entry = this.entries[index];
-		if (entry.type === 'word') {
-			// Should not happen
+		return this.entries[index];
+	}
+
+	lookupHanzi(hanzi: string): Hanzi | null {
+		const entry = this.lookup(hanzi);
+		if (!entry || entry.type !== 'hanzi') {
 			return null;
 		}
 		return entry.item;
 	}
 
 	search(query: string): DictEntry[] {
-		const needle = query.toLowerCase();
+		const needle = removeToneMarks(query.trim()).toLowerCase();
 		const indexes = new Set(
 			this.searchIndex
 				.filter(({ pinyin }) => pinyin.startsWith(needle))
