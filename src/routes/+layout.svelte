@@ -2,14 +2,15 @@
 	import Header from './Header.svelte';
 	import './layout.css';
 	import { SearchState, setSearchState } from '$lib/dictionary/searchState.svelte';
+	import type { LayoutProps } from './$types.js';
 
-	let { children, data } = $props();
+	let { children, data }: LayoutProps = $props();
 
 	setSearchState(new SearchState());
 </script>
 
 <div class="flex min-h-screen flex-col">
-	<Header dictionary={data.dictionary} />
+	<Header commonHanzi={data.commonHanzi} />
 
 	<main class="mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 py-8 sm:px-6 sm:py-12">
 		{@render children()}

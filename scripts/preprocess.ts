@@ -49,5 +49,5 @@ const downloadFullDictionary = async (): Promise<void> => {
 
 await downloadFullDictionary();
 const words = await preprocess(COMBINED_PATH);
-mkdirSync('src/lib/generated', { recursive: true });
-await writeFile('src/lib/generated/data.json', JSON.stringify(words));
+mkdirSync('static/generated', { recursive: true });
+await writeFile('static/generated/data.json', JSON.stringify(words));

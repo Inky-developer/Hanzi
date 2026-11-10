@@ -2,15 +2,9 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { onMount } from 'svelte';
-	import type { Dictionary } from '$lib/dictionary/dictionary';
 
-	const { dictionary }: { dictionary: Dictionary } = $props();
+	const { commonHanzi }: { commonHanzi: string[] } = $props();
 	const MILLISECONDS_PER_DAY = 86_400_000;
-	const HANZI_OF_THE_DAY_POOL_SIZE = 1000;
-
-	const hanzi = $derived(
-		dictionary.entries.filter((it) => it.type === 'hanzi').map((it) => it.item)
-	);
 
 	const localDayNumber = (date: Date): number =>
 		Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / MILLISECONDS_PER_DAY;
@@ -18,8 +12,7 @@
 	let symbolOfTheDay = $state('');
 
 	onMount(() => {
-		const poolSize = Math.min(hanzi.length, HANZI_OF_THE_DAY_POOL_SIZE);
-		symbolOfTheDay = hanzi[localDayNumber(new Date()) % poolSize].text;
+		symbolOfTheDay = commonHanzi[localDayNumber(new Date()) % commonHanzi.length];
 	});
 
 	const links = [
