@@ -15,7 +15,9 @@ const config: Config = {
 			// these options are set automatically — see below
 			pages: 'build',
 			assets: 'build',
-			fallback: '200.html',
+			// Building for github pages, which uses 404 for unknown urls
+			// Svelte then handles these
+			fallback: '404.html',
 			precompress: true,
 			strict: true
 		})
