@@ -10,7 +10,7 @@
 // Ensures that the `$service-worker` import has proper type definitions
 /// <reference types="@sveltejs/kit" />
 
-import { build, files, version } from '$service-worker';
+import { build, files, version, base, prerendered } from '$service-worker';
 
 // This gives `self` the correct types
 const self = globalThis.self as unknown as ServiceWorkerGlobalScope;
@@ -18,9 +18,14 @@ const self = globalThis.self as unknown as ServiceWorkerGlobalScope;
 // Create a unique cache name for this deployment
 const CACHE = `cache-${version}`;
 
+// The fallback URL, used for github pages where non-pre-rendered pages load inside the 404.html
+const FALLBACK = `${base}/404.html`;
+
 const ASSETS = [
 	...build, // the app itself
-	...files // everything in `static`
+	...files, // everything in `static`
+	...prerendered, // Every prerendered page
+	FALLBACK // The fallback for non-prerendered pages
 ];
 
 self.addEventListener('install', (event) => {
@@ -82,6 +87,14 @@ self.addEventListener('fetch', (event) => {
 
 			if (response) {
 				return response;
+			}
+
+			// Otherwise, try to serve the fallback page
+			if (event.request.mode === 'navigate') {
+				const fallback = await cache.match(FALLBACK);
+				if (fallback) {
+					return fallback;
+				}
 			}
 
 			// if there's no cache, then just error out
