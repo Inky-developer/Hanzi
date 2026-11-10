@@ -12,10 +12,10 @@ export const prerender = true;
  * The reason is that otherwise svelte would embed the whole generated JSON file
  * into the initial HTML page, slowing down the initial load a lot.
  */
-export const load: PageLoad<{ dictionary: Dictionary | null }> = async ({ fetch }) => {
+export const load: PageLoad<{ dictionary: Promise<Dictionary> | null }> = async ({ fetch }) => {
 	if (!browser) {
 		return { dictionary: null };
 	}
 
-	return { dictionary: await loadDictionary(fetch) };
+	return { dictionary: loadDictionary(fetch) };
 };
