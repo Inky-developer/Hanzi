@@ -135,6 +135,14 @@ const isNonHskVariant = (entry: Entry): boolean =>
 const isTraditionalOnly = (entry: Entry): boolean =>
 	entry.simpVariants !== undefined && !entry.simpVariants.includes(entry.char);
 
+const MAX_HSK_LEVEL = 9;
+const mapHSK = (level: number | undefined): number | null => {
+	if (level === undefined || level > MAX_HSK_LEVEL) {
+		return null;
+	}
+	return level;
+};
+
 const parseChar = (entry: Entry): Hanzi | null => {
 	if (isNonHskVariant(entry) || isTraditionalOnly(entry)) {
 		return null;
@@ -167,7 +175,7 @@ const parseChar = (entry: Entry): Hanzi | null => {
 		english: [entry?.gloss ?? ''],
 		characterHint: entry?.hint ?? '',
 		originalMeaning: entry?.originalMeaning ?? '',
-		hskLevel: entry?.statistics?.hskLevel ?? null,
+		hskLevel: mapHSK(entry?.statistics?.hskLevel),
 		strokeData
 	};
 };
@@ -190,7 +198,7 @@ const parseWord = (entry: WordEntry): Word | null => {
 		pinyins: [...pinyins],
 		english: [...english],
 		frequency,
-		hskLevel: entry.statistics?.hskLevel ?? null
+		hskLevel: mapHSK(entry.statistics?.hskLevel)
 	};
 };
 
