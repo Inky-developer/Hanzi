@@ -3,6 +3,7 @@
 	import type { Dictionary } from '$lib/dictionary/dictionary';
 	import Hanzi from '$lib/dictionary/Hanzi.svelte';
 	import DictionarySection from '$lib/components/DictionarySection.svelte';
+	import ClickableHanziText from '$lib/components/ClickableHanziText.svelte';
 	import { resolve } from '$app/paths';
 
 	const { entry, dictionary }: { entry: DictEntry; dictionary: Dictionary } = $props();
@@ -49,7 +50,7 @@
 						<li
 							class="not-first:before:mr-1.5 not-first:before:text-paper-300 not-first:before:content-['·'] dark:not-first:before:text-paper-700"
 						>
-							{english}
+							<ClickableHanziText text={english} {dictionary} />
 						</li>
 					{/each}
 				</ul>
@@ -58,7 +59,7 @@
 
 		{#if entry.type === 'hanzi' && (entry.item.characterHint.length > 0 || entry.item.originalMeaning.length > 0)}
 			<DictionarySection title="Glossary">
-				{entry.item.characterHint}
+				<ClickableHanziText text={entry.item.characterHint} {dictionary} />
 				<br />
 				{#if entry.item.originalMeaning.length > 0}
 					Original meaning: {entry.item.originalMeaning}
