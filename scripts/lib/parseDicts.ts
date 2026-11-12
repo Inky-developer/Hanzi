@@ -166,6 +166,7 @@ const parseChar = (entry: Entry): Hanzi | null => {
 		pinyins: pinyins.map((it) => it.text),
 		english: [entry?.gloss ?? ''],
 		characterHint: entry?.hint ?? '',
+		originalMeaning: entry?.originalMeaning ?? '',
 		hskLevel: entry?.statistics?.hskLevel ?? null,
 		strokeData
 	};

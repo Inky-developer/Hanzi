@@ -30,9 +30,7 @@
 
 		{#if entry.item.pinyins.length > 0}
 			<DictionarySection title="Pinyin">
-				<ul
-					class="flex flex-wrap items-baseline gap-x-1.5 font-serif text-paper-700 dark:text-paper-300"
-				>
+				<ul class="flex flex-wrap items-baseline gap-x-1.5">
 					{#each entry.item.pinyins as pinyin (pinyin)}
 						<li
 							class="not-first:before:mr-1.5 not-first:before:text-paper-300 not-first:before:content-['·'] dark:not-first:before:text-paper-700"
@@ -46,10 +44,7 @@
 
 		{#if entry.item.english.length > 0}
 			<DictionarySection title="Meanings">
-				<ul
-					lang="en"
-					class="flex flex-wrap items-baseline gap-x-1.5 font-serif text-paper-700 italic dark:text-paper-300"
-				>
+				<ul lang="en" class="flex flex-wrap items-baseline gap-x-1.5 font-serif italic">
 					{#each entry.item.english as english (english)}
 						<li
 							class="not-first:before:mr-1.5 not-first:before:text-paper-300 not-first:before:content-['·'] dark:not-first:before:text-paper-700"
@@ -58,6 +53,16 @@
 						</li>
 					{/each}
 				</ul>
+			</DictionarySection>
+		{/if}
+
+		{#if entry.type === 'hanzi' && (entry.item.characterHint.length > 0 || entry.item.originalMeaning.length > 0)}
+			<DictionarySection title="Glossary">
+				{entry.item.characterHint}
+				<br />
+				{#if entry.item.originalMeaning.length > 0}
+					Original meaning: {entry.item.originalMeaning}
+				{/if}
 			</DictionarySection>
 		{/if}
 	</div>

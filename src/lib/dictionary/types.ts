@@ -36,6 +36,7 @@ export type StrokeData = {
 
 export type Hanzi = Common & {
 	characterHint: string;
+	originalMeaning: string;
 	hskLevel: number | null;
 	strokeData?: StrokeData;
 };
