@@ -60,7 +60,14 @@ self.addEventListener('fetch', (event) => {
 		// `build`/`files` can always be served from the cache
 		if (ASSETS.includes(url.pathname)) {
 			const response = await cache.match(url.pathname);
+			if (response) {
+				return response;
+			}
+		}
 
+		// Navigation requests can be served from the fallback page
+		if (event.request.mode === 'navigate') {
+			const response = await cache.match(FALLBACK);
 			if (response) {
 				return response;
 			}
@@ -87,14 +94,6 @@ self.addEventListener('fetch', (event) => {
 
 			if (response) {
 				return response;
-			}
-
-			// Otherwise, try to serve the fallback page
-			if (event.request.mode === 'navigate') {
-				const fallback = await cache.match(FALLBACK);
-				if (fallback) {
-					return fallback;
-				}
 			}
 
 			// if there's no cache, then just error out
