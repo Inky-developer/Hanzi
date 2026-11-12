@@ -65,5 +65,11 @@
 				{/if}
 			</DictionarySection>
 		{/if}
+
+		{#if entry.item.hskLevel !== null}
+			<DictionarySection title="HSK level">
+				{entry.item.hskLevel}
+			</DictionarySection>
+		{/if}
 	</div>
 </article>

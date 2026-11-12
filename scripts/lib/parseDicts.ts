@@ -185,8 +185,17 @@ const parseWord = (entry: WordEntry): Word | null => {
 	const english = new Set(
 		entry.items.flatMap((it) => it.definitions ?? []).filter((it) => !it.startsWith('CL:'))
 	);
-	return { text: entry.simp, pinyins: [...pinyins], english: [...english], frequency };
+	return {
+		text: entry.simp,
+		pinyins: [...pinyins],
+		english: [...english],
+		frequency,
+		hskLevel: entry.statistics?.hskLevel ?? null
+	};
 };
+
+const minIgnoringNull = (a: number | null, b: number | null): number | null =>
+	a == null ? b : b == null ? a : Math.min(a, b);
 
 // Sometimes words are duplicated and only differ in the traditional text.
 // Their frequency statistics are the same, so the frequencies shouldn't be added.
@@ -194,7 +203,8 @@ const mergeWords = (lhs: Word, rhs: Word): Word => ({
 	text: lhs.text,
 	pinyins: [...new Set([...lhs.pinyins, ...rhs.pinyins])],
 	english: [...new Set([...lhs.english, ...rhs.english])],
-	frequency: Math.max(lhs.frequency, rhs.frequency)
+	frequency: Math.max(lhs.frequency, rhs.frequency),
+	hskLevel: minIgnoringNull(lhs.hskLevel, rhs.hskLevel)
 });
 
 /**

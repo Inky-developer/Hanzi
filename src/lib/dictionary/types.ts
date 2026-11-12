@@ -20,6 +20,7 @@ export type Common = {
 	 * Raw counts are not used, since the word corpus is much larger than the character corpus.
 	 */
 	frequency: number;
+	hskLevel: number | null;
 };
 
 export type Word = Common;
@@ -37,6 +38,5 @@ export type StrokeData = {
 export type Hanzi = Common & {
 	characterHint: string;
 	originalMeaning: string;
-	hskLevel: number | null;
 	strokeData?: StrokeData;
 };
