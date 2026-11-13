@@ -11,7 +11,7 @@
 	class="flex w-full flex-col overflow-hidden rounded-2xl bg-white/80 shadow-xl ring-1 shadow-black/5 ring-paper-200/80 backdrop-blur-sm md:min-h-120 md:flex-row dark:bg-white/5 dark:shadow-black/40 dark:ring-paper-800"
 >
 	<div
-		class="flex min-h-0 flex-col border-b border-paper-200 md:w-72 md:shrink-0 md:border-r md:border-b-0 dark:border-paper-800"
+		class="flex min-h-0 w-72 shrink-0 flex-col border-r border-paper-200 not-md:hidden dark:border-paper-800"
 	>
 		<Search {dictionary} selected={entry} />
 	</div>

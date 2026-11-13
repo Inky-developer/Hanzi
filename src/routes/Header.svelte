@@ -2,8 +2,15 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { onMount } from 'svelte';
+	import type { Dictionary } from '$lib/dictionary/dictionary';
+	import Search from '$lib/dictionary/Search.svelte';
+	import SearchIcon from '@lucide/svelte/icons/search';
+	import { afterNavigate } from '$app/navigation';
 
-	const { commonHanzi }: { commonHanzi: string[] } = $props();
+	const {
+		commonHanzi,
+		dictionary
+	}: { commonHanzi: string[]; dictionary: Promise<Dictionary> | null } = $props();
 	const MILLISECONDS_PER_DAY = 86_400_000;
 
 	const localDayNumber = (date: Date): number =>
@@ -19,6 +26,9 @@
 		{ href: resolve('/'), label: 'Wörterbuch' },
 		{ href: resolve('/about'), label: 'Über' }
 	];
+
+	let dialog: HTMLDialogElement;
+	afterNavigate(() => dialog.close());
 </script>
 
 <header
@@ -40,7 +50,7 @@
 			</span>
 		</a>
 
-		<nav class="ml-auto">
+		<nav class="ml-auto flex items-center">
 			<ul class="flex items-center gap-1">
 				{#each links as link (link.href)}
 					{@const current = page.url.pathname === link.href}
@@ -58,6 +68,32 @@
 					</li>
 				{/each}
 			</ul>
+
+			<button class="md:hidden" onclick={() => dialog.showModal()}>
+				<SearchIcon class="mx-3 size-4 text-paper-500 dark:text-paper-400" />
+			</button>
+
+			<!--	Dictionary is not loaded during pre-rendering.-->
+			<!--	Only show the search once the dictionary has loaded.-->
+			{#snippet loading()}
+				<div class="w-full text-center">Loading dictionary...</div>
+			{/snippet}
+			<dialog
+				bind:this={dialog}
+				class="m-auto w-full rounded-xl shadow-2xl shadow-black backdrop:bg-paper-900/40 backdrop:backdrop-blur-md"
+			>
+				{#if dictionary}
+					{#await dictionary}
+						{@render loading()}
+					{:then dictionary}
+						<Search {dictionary} selected={null} />
+					{:catch}
+						<div class="w-full text-center">Failed to load data</div>
+					{/await}
+				{:else}
+					{@render loading()}
+				{/if}
+			</dialog>
 		</nav>
 	</div>
 </header>
