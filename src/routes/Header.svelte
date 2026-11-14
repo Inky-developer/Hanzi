@@ -4,7 +4,7 @@
 	import { onMount } from 'svelte';
 	import type { Dictionary } from '$lib/dictionary/dictionary';
 	import Search from '$lib/dictionary/Search.svelte';
-	import SearchIcon from '@lucide/svelte/icons/search';
+	import { Search as SearchIcon } from '@lucide/svelte';
 	import { afterNavigate } from '$app/navigation';
 
 	const {
