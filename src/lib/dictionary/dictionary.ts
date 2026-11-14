@@ -1,8 +1,9 @@
 import type { DictEntry, Hanzi } from '$lib/dictionary/types';
 import { removeToneMarks } from '$lib/dictionary/pinyin';
+import { groupByKey } from '$lib/utils/functional';
 
-type SearchIndex = {
-	pinyin: string;
+type Index = {
+	text: string;
 	dictIndexes: number[];
 };
 
@@ -12,34 +13,38 @@ export class Dictionary {
 		// Index chinese -> index
 		readonly wordIndex: Record<string, number>,
 		// Index pinyin -> index
-		readonly searchIndex: SearchIndex[]
+		readonly pinyinIndex: Index[],
+		// Index meaning -> index
+		readonly englishIndex: Index[]
 	) {}
 
 	static fromStorage(data: DictEntry[]): Dictionary {
 		const buildWordIndex = (data: DictEntry[]): Record<string, number> =>
 			Object.fromEntries(data.map((entry, index) => [entry.item.text, index]));
 
-		const buildSearchIndex = (entries: DictEntry[]): SearchIndex[] => {
-			const searchIndex: Record<string, number[]> = {};
-			entries.forEach((entry, index) => {
-				const pinyins = entry.item.pinyins;
-				const spellings = new Set(pinyins.map((text) => normalizePinyinSearch(text)));
-				for (const pinyin of spellings) {
-					if (searchIndex[pinyin] === undefined) {
-						searchIndex[pinyin] = [];
-					}
-					searchIndex[pinyin].push(index);
-				}
-			});
-			return Object.entries(searchIndex).map(([pinyin, dictIndexes]) => ({
-				pinyin,
-				dictIndexes
-			}));
+		const buildIndex = (entries: DictEntry[], getKey: (entry: DictEntry) => string[]): Index[] => {
+			const groups = groupByKey(
+				entries.map((_, i) => i),
+				(idx) => getKey(entries[idx])
+			);
+			return groups
+				.entries()
+				.map(([text, dictIndexes]) => ({
+					text,
+					dictIndexes: [...dictIndexes]
+				}))
+				.toArray();
 		};
 
+		const buildPinyinIndex = (entries: DictEntry[]): Index[] =>
+			buildIndex(entries, (entry) => entry.item.pinyins.map((it) => normalizePinyinSearch(it)));
+		const buildEnglishIndex = (entries: DictEntry[]): Index[] =>
+			buildIndex(entries, (entry) => entry.item.english.map((it) => normalizeEnglishSearch(it)));
+
 		const wordIndex = buildWordIndex(data);
-		const searchIndex = buildSearchIndex(data);
-		return new Dictionary(data, wordIndex, searchIndex);
+		const searchIndex = buildPinyinIndex(data);
+		const englishIndex = buildEnglishIndex(data);
+		return new Dictionary(data, wordIndex, searchIndex, englishIndex);
 	}
 
 	lookup(word: string): DictEntry | null {
@@ -58,14 +63,23 @@ export class Dictionary {
 		return entry.item;
 	}
 
-	searchPinyin(query: string): DictEntry[] {
-		const needle = normalizePinyinSearch(query);
+	private searchIndex(query: string, index: Index[]): DictEntry[] {
 		const indexes = new Set(
-			this.searchIndex
-				.filter(({ pinyin }) => textMatchLength(needle, pinyin) == needle.length)
+			index
+				.filter(({ text }) => textMatchLength(query, text) == query.length)
 				.flatMap((it) => it.dictIndexes)
 		);
 		return [...indexes].sort((a, b) => a - b).map((index) => this.entries[index]);
+	}
+
+	searchPinyin(query: string): DictEntry[] {
+		const needle = normalizePinyinSearch(query);
+		return this.searchIndex(needle, this.pinyinIndex);
+	}
+
+	searchEnglish(query: string): DictEntry[] {
+		const needle = normalizeEnglishSearch(query);
+		return this.searchIndex(needle, this.englishIndex);
 	}
 
 	searchHanzi(query: string): DictEntry[] {
@@ -75,7 +89,9 @@ export class Dictionary {
 }
 
 export const normalizePinyinSearch = (pinyin: string): string =>
-	removeToneMarks(pinyin).toLowerCase();
+	removeToneMarks(pinyin.trim()).toLowerCase();
+
+export const normalizeEnglishSearch = (search: string): string => search.trim().toLowerCase();
 
 export const textMatchLength = (query: string, text: string): number => {
 	for (let i = 0; i < query.length; i++) {

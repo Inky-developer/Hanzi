@@ -1,6 +1,7 @@
 import { createContext } from 'svelte';
 
-export type SearchMode = 'pinyin' | 'hanzi';
+export const SEARCH_MODES = ['pinyin', 'hanzi', 'english'] as const;
+export type SearchMode = (typeof SEARCH_MODES)[number];
 
 /** Search input shared by all pages, so it survives navigating between them. */
 export class SearchState {

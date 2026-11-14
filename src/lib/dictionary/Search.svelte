@@ -6,7 +6,11 @@
 	} from '$lib/dictionary/dictionary';
 	import { type DictEntry, dictEntryEq } from '$lib/dictionary/types';
 	import { resolve } from '$app/paths';
-	import { getSearchState, type SearchMode } from '$lib/dictionary/searchState.svelte';
+	import {
+		getSearchState,
+		SEARCH_MODES,
+		type SearchMode
+	} from '$lib/dictionary/searchState.svelte';
 	import { goto } from '$app/navigation';
 	import { Search as SearchIcon } from '@lucide/svelte';
 
@@ -22,11 +26,16 @@
 	const MAX_RESULTS = 100;
 	const PROMPTS: Record<SearchMode, { title: string; description: string; short: string }> = {
 		pinyin: {
-			title: 'Search pinyin',
+			title: 'Search Pinyin',
 			description: 'Enter a word in pinyin, for example `gong`',
 			short: 'P'
 		},
-		hanzi: { title: 'Search hanzi', description: 'Enter hanzi, for example `工`', short: 'H' }
+		hanzi: { title: 'Search Hanzi', description: 'Enter hanzi, for example `工`', short: 'H' },
+		english: {
+			title: 'Search English',
+			description: 'Enter an English word, for example `work`',
+			short: 'E'
+		}
 	};
 
 	const search = getSearchState();
@@ -41,6 +50,8 @@
 				return dictionary.searchHanzi(trimmed);
 			case 'pinyin':
 				return dictionary.searchPinyin(trimmed);
+			case 'english':
+				return dictionary.searchEnglish(trimmed);
 		}
 	});
 	const shown = $derived(results.slice(0, MAX_RESULTS));
@@ -54,12 +65,8 @@
 	};
 
 	const nextMode = (): SearchMode => {
-		switch (mode) {
-			case 'hanzi':
-				return 'pinyin';
-			case 'pinyin':
-				return 'hanzi';
-		}
+		const currentIndex = SEARCH_MODES.indexOf(mode) ?? 0;
+		return SEARCH_MODES[(currentIndex + 1) % SEARCH_MODES.length];
 	};
 </script>
 
