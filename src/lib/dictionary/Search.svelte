@@ -2,7 +2,8 @@
 	import {
 		type Dictionary,
 		textMatchLength,
-		normalizePinyinSearch
+		normalizePinyinSearch,
+		normalizeEnglishSearch
 	} from '$lib/dictionary/dictionary';
 	import { type DictEntry, dictEntryEq } from '$lib/dictionary/types';
 	import { resolve } from '$app/paths';
@@ -24,17 +25,40 @@
 
 	/** Rendering every match of a one-letter query would mean thousands of nodes. */
 	const MAX_RESULTS = 100;
-	const PROMPTS: Record<SearchMode, { title: string; description: string; short: string }> = {
+	const PROMPTS: Record<
+		SearchMode,
+		{
+			title: string;
+			description: string;
+			short: string;
+			search: (query: string) => DictEntry[];
+			project: (item: DictEntry) => string[];
+			normalize: (text: string) => string;
+		}
+	> = {
 		pinyin: {
 			title: 'Search Pinyin',
 			description: 'Enter a word in pinyin, for example `gong`',
-			short: 'P'
+			short: 'P',
+			search: (it) => dictionary.searchPinyin(it),
+			project: (it) => it.item.pinyins,
+			normalize: normalizePinyinSearch
 		},
-		hanzi: { title: 'Search Hanzi', description: 'Enter hanzi, for example `工`', short: 'H' },
+		hanzi: {
+			title: 'Search Hanzi',
+			description: 'Enter hanzi, for example `工`',
+			short: 'H',
+			search: (it) => dictionary.searchHanzi(it),
+			project: (it) => [it.item.text],
+			normalize: (it) => it.trim()
+		},
 		english: {
 			title: 'Search English',
 			description: 'Enter an English word, for example `work`',
-			short: 'E'
+			short: 'E',
+			search: (it) => dictionary.searchEnglish(it),
+			project: (it) => it.item.english,
+			normalize: normalizeEnglishSearch
 		}
 	};
 
@@ -45,14 +69,7 @@
 	const results: DictEntry[] = $derived.by(() => {
 		const trimmed = query.trim();
 		if (trimmed.length === 0) return [];
-		switch (mode) {
-			case 'hanzi':
-				return dictionary.searchHanzi(trimmed);
-			case 'pinyin':
-				return dictionary.searchPinyin(trimmed);
-			case 'english':
-				return dictionary.searchEnglish(trimmed);
-		}
+		return PROMPTS[mode].search(trimmed);
 	});
 	const shown = $derived(results.slice(0, MAX_RESULTS));
 
@@ -121,22 +138,22 @@
 					class="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-paper-100 dark:hover:bg-paper-800/60
 						{active ? 'bg-ink-600/10 dark:bg-ink-600/25' : ''}"
 				>
-					<span class="min-w-0 flex-1 truncate">
+					<span class="min-w-0 shrink-0">
 						{result.item.text}
 					</span>
-					<span class="inline-flex shrink-0 gap-2 rounded px-1.5 py-0.5 text-[0.65rem] font-medium">
-						{#each result.item.pinyins as pinyin (pinyin)}
+					<span class="ml-auto min-w-0 truncate rounded px-1.5 py-0.5 text-[0.65rem] font-medium">
+						{#each PROMPTS[mode].project(result) as prop (prop)}
 							{@const matchLength = textMatchLength(
-								normalizePinyinSearch(query),
-								normalizePinyinSearch(pinyin)
+								PROMPTS[mode].normalize(query),
+								PROMPTS[mode].normalize(prop)
 							)}
 							{#if matchLength > 0}
-								<span>
+								<span class="not-first:ml-2">
 									<span class="text-paper-400 dark:text-paper-500"
-										>{pinyin.slice(0, matchLength)}</span
+										>{prop.slice(0, matchLength)}</span
 									><span
 										class="font-medium text-paper-900 dark:text-paper-100
-								{active ? 'text-ink-700 dark:text-ink-300' : ''}">{pinyin.slice(matchLength)}</span
+								{active ? 'text-ink-700 dark:text-ink-300' : ''}">{prop.slice(matchLength)}</span
 									>
 								</span>
 							{/if}
