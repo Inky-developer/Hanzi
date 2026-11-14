@@ -1,10 +1,14 @@
 <script lang="ts">
-	import { type Dictionary } from '$lib/dictionary/dictionary';
+	import {
+		type Dictionary,
+		textMatchLength,
+		normalizePinyinSearch
+	} from '$lib/dictionary/dictionary';
 	import { type DictEntry, dictEntryEq } from '$lib/dictionary/types';
-	import { removeToneMarks } from '$lib/dictionary/pinyin';
 	import { resolve } from '$app/paths';
-	import { getSearchState } from '$lib/dictionary/searchState.svelte';
+	import { getSearchState, type SearchMode } from '$lib/dictionary/searchState.svelte';
 	import { goto } from '$app/navigation';
+	import { Search as SearchIcon } from '@lucide/svelte';
 
 	const {
 		dictionary,
@@ -16,14 +20,28 @@
 
 	/** Rendering every match of a one-letter query would mean thousands of nodes. */
 	const MAX_RESULTS = 100;
+	const PROMPTS: Record<SearchMode, { title: string; description: string; short: string }> = {
+		pinyin: {
+			title: 'Search pinyin',
+			description: 'Enter a word in pinyin, for example `gong`',
+			short: 'P'
+		},
+		hanzi: { title: 'Search hanzi', description: 'Enter hanzi, for example `工`', short: 'H' }
+	};
 
 	const search = getSearchState();
 	const query = $derived(search.query);
+	const mode = $derived(search.mode);
 
 	const results: DictEntry[] = $derived.by(() => {
 		const trimmed = query.trim();
 		if (trimmed.length === 0) return [];
-		return dictionary.search(trimmed);
+		switch (mode) {
+			case 'hanzi':
+				return dictionary.searchHanzi(trimmed);
+			case 'pinyin':
+				return dictionary.searchPinyin(trimmed);
+		}
 	});
 	const shown = $derived(results.slice(0, MAX_RESULTS));
 
@@ -35,42 +53,40 @@
 		goto(resolve('/dict/[word]', { word: shown[0].item.text }));
 	};
 
-	const getMatchLength = (pinyin: string): number => {
-		const q = removeToneMarks(query.trim().toLowerCase());
-		const p = removeToneMarks(pinyin.trim().toLowerCase());
-		for (let i = 0; i < q.length; i++) {
-			if (i >= p.length || p.charCodeAt(i) !== q.charCodeAt(i)) return i;
+	const nextMode = (): SearchMode => {
+		switch (mode) {
+			case 'hanzi':
+				return 'pinyin';
+			case 'pinyin':
+				return 'hanzi';
 		}
-		return q.length;
 	};
 </script>
 
 <div class="flex min-h-0 flex-col">
-	<div class="p-3">
-		<div class="relative">
-			<svg
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="2"
-				stroke-linecap="round"
+	<div class="flex gap-2 p-3">
+		<div class="relative flex-1">
+			<SearchIcon
 				class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-paper-400"
-				aria-hidden="true"
-			>
-				<circle cx="11" cy="11" r="7" />
-				<path d="m20 20-3.5-3.5" />
-			</svg>
+			/>
 			<input
 				bind:value={search.query}
 				onkeydown={onKeyDown}
 				type="search"
 				autocomplete="off"
 				spellcheck="false"
-				aria-label="Wort suchen"
-				placeholder="Wort suchen…"
+				aria-label="Search"
+				placeholder={PROMPTS[mode].title}
 				class="w-full rounded-lg border border-paper-200 bg-white py-2 pr-3 pl-9 text-sm shadow-sm transition outline-none focus:border-ink-500 focus:ring-3 focus:ring-ink-500/30 dark:border-paper-700 dark:bg-black/20 dark:placeholder:text-paper-400"
 			/>
 		</div>
+		<button
+			type="button"
+			onclick={() => (search.mode = nextMode())}
+			class="shrink-0 rounded-lg border border-paper-200 bg-white p-2 text-sm text-paper-400 shadow-sm transition outline-none hover:bg-paper-100 focus-visible:border-ink-500 focus-visible:ring-3 focus-visible:ring-ink-500/30 dark:border-paper-700 dark:bg-black/20 dark:hover:bg-paper-800/60"
+		>
+			<span class="grid size-[1lh] place-items-center">{PROMPTS[mode].short}</span>
+		</button>
 	</div>
 
 	{#if query.trim().length > 0}
@@ -79,11 +95,11 @@
 			aria-live="polite"
 		>
 			{#if results.length === 0}
-				Keine Treffer
+				No results
 			{:else if results.length > MAX_RESULTS}
-				{MAX_RESULTS} von {results.length} Treffern
+				{MAX_RESULTS} of {results.length} results
 			{:else}
-				{results.length} Treffer
+				{results.length} results
 			{/if}
 		</p>
 	{/if}
@@ -103,7 +119,10 @@
 					</span>
 					<span class="inline-flex shrink-0 gap-2 rounded px-1.5 py-0.5 text-[0.65rem] font-medium">
 						{#each result.item.pinyins as pinyin (pinyin)}
-							{@const matchLength = getMatchLength(pinyin)}
+							{@const matchLength = textMatchLength(
+								normalizePinyinSearch(query),
+								normalizePinyinSearch(pinyin)
+							)}
 							{#if matchLength > 0}
 								<span>
 									<span class="text-paper-400 dark:text-paper-500"
@@ -122,11 +141,11 @@
 
 		{#if query.trim().length === 0}
 			<p class="px-3 py-6 text-center text-sm text-paper-400 dark:text-paper-500">
-				Tippen Sie ein Wort in Pinyin, z.&nbsp;B. <span class="font-serif italic">gong</span>.
+				{PROMPTS[mode].description}.
 			</p>
 		{:else if results.length === 0}
 			<p class="px-3 py-6 text-center text-sm text-paper-400 dark:text-paper-500">
-				Kein Wort gefunden mit <span class="font-serif break-all italic">{query.trim()}</span>.
+				No word found with <span class="font-serif break-all">{query.trim()}</span>.
 			</p>
 		{/if}
 	</ol>

@@ -23,7 +23,7 @@ export class Dictionary {
 			const searchIndex: Record<string, number[]> = {};
 			entries.forEach((entry, index) => {
 				const pinyins = entry.item.pinyins;
-				const spellings = new Set(pinyins.map((text) => removeToneMarks(text)));
+				const spellings = new Set(pinyins.map((text) => normalizePinyinSearch(text)));
 				for (const pinyin of spellings) {
 					if (searchIndex[pinyin] === undefined) {
 						searchIndex[pinyin] = [];
@@ -58,13 +58,28 @@ export class Dictionary {
 		return entry.item;
 	}
 
-	search(query: string): DictEntry[] {
-		const needle = removeToneMarks(query.trim()).toLowerCase();
+	searchPinyin(query: string): DictEntry[] {
+		const needle = normalizePinyinSearch(query);
 		const indexes = new Set(
 			this.searchIndex
-				.filter(({ pinyin }) => pinyin.startsWith(needle))
+				.filter(({ pinyin }) => textMatchLength(needle, pinyin) == needle.length)
 				.flatMap((it) => it.dictIndexes)
 		);
 		return [...indexes].sort((a, b) => a - b).map((index) => this.entries[index]);
 	}
+
+	searchHanzi(query: string): DictEntry[] {
+		const needle = query.trim();
+		return this.entries.filter((it) => textMatchLength(needle, it.item.text) == needle.length);
+	}
 }
+
+export const normalizePinyinSearch = (pinyin: string): string =>
+	removeToneMarks(pinyin).toLowerCase();
+
+export const textMatchLength = (query: string, text: string): number => {
+	for (let i = 0; i < query.length; i++) {
+		if (i >= text.length || text.charCodeAt(i) !== query.charCodeAt(i)) return i;
+	}
+	return query.length;
+};
