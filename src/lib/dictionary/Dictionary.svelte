@@ -3,6 +3,7 @@
 	import Search from '$lib/dictionary/Search.svelte';
 	import WordPanel from '$lib/dictionary/WordPanel.svelte';
 	import type { DictEntry } from '$lib/dictionary/types';
+	import { asset } from '$app/paths';
 
 	const { dictionary, entry }: { dictionary: Dictionary; entry: DictEntry | null } = $props();
 </script>
@@ -22,25 +23,9 @@
 		{:else}
 			<div class="grid flex-1 place-items-center px-6 py-14 text-paper-500 dark:text-paper-400">
 				<div class="max-w-xs text-center">
-					<svg
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="1.25"
-						class="mx-auto mb-4 size-12 text-paper-300 dark:text-paper-700"
-						aria-hidden="true"
-					>
-						<path d="M12 4v7m0 0-4 5m4-5 4 5" stroke-linecap="round" />
-						<circle cx="12" cy="3" r="1.6" />
-						<circle cx="7" cy="17.5" r="1.6" />
-						<circle cx="17" cy="17.5" r="1.6" />
-					</svg>
-					<p class="font-serif text-lg text-paper-700 dark:text-paper-200">
-						Wortfamilien entdecken
-					</p>
-					<p class="mt-1.5 text-sm">
-						Suchen Sie ein deutsches Wort, um alle verwandten Wörter zu sehen.
-					</p>
+					<img src={asset('/icon.svg')} alt="app icon" class="mx-auto mb-4 size-16" />
+					<p class="font-serif text-lg text-paper-700 dark:text-paper-200">Search dictionary</p>
+					<p class="mt-1.5 text-sm">Start by searching for a word</p>
 				</div>
 			</div>
 		{/if}
