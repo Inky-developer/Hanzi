@@ -210,10 +210,17 @@ const parseWord = (entry: WordEntry): Word | null => {
 	const pinyins = new Set(
 		entry.items.flatMap((it) => (it.pinyin === undefined ? [] : [it.pinyin.replaceAll('​', ' ')]))
 	);
+
+	const preferredSource = 'cedict';
+	let rawEnglish = entry.items
+		.filter((it) => it.source === preferredSource)
+		.flatMap((it) => parseDefinitions(it));
+	if (rawEnglish.length === 0) {
+		rawEnglish = entry.items.flatMap((it) => parseDefinitions(it));
+	}
 	// TODO: Parse classifiers (number words, instead of stripping them)
-	const english = new Set(
-		entry.items.flatMap((it) => parseDefinitions(it)).filter((it) => !it.startsWith('CL:'))
-	);
+	const english = new Set(rawEnglish.filter((it) => !it.startsWith('CL:')));
+
 	return {
 		text: entry.simp,
 		traditional: entry.trad === entry.simp ? [] : [entry.trad],
