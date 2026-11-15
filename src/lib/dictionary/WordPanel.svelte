@@ -26,7 +26,7 @@
 	>
 		<DictionarySection title="Simplified">
 			{#each Array.from(entry.item.text) as char, index (index)}
-				<DictionaryLink {dictionary} text={char} />
+				<DictionaryLink {dictionary} text={char} current={entry} />
 			{/each}
 		</DictionarySection>
 
@@ -35,7 +35,7 @@
 				<SeparatedList items={entry.item.traditional}>
 					{#snippet item(traditional)}
 						{#each Array.from(traditional) as char, index (index)}
-							<DictionaryLink {dictionary} text={char} />
+							<DictionaryLink {dictionary} text={char} current={entry} />
 						{/each}
 					{/snippet}
 				</SeparatedList>
@@ -56,7 +56,7 @@
 			<DictionarySection title="Meanings">
 				<SeparatedList items={entry.item.english} lang="en" class="font-serif italic">
 					{#snippet item(english)}
-						<ClickableHanziText text={english} {dictionary} />
+						<ClickableHanziText text={english} {dictionary} current={entry} />
 					{/snippet}
 				</SeparatedList>
 			</DictionarySection>
@@ -64,7 +64,7 @@
 
 		{#if entry.type === 'hanzi' && (entry.item.characterHint.length > 0 || entry.item.originalMeaning.length > 0)}
 			<DictionarySection title="Glossary">
-				<ClickableHanziText text={entry.item.characterHint} {dictionary} />
+				<ClickableHanziText text={entry.item.characterHint} {dictionary} current={entry} />
 				<br />
 				{#if entry.item.originalMeaning.length > 0}
 					Original meaning: {entry.item.originalMeaning}
