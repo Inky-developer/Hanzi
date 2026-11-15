@@ -52,6 +52,16 @@
 			</DictionarySection>
 		{/if}
 
+		{#if entry.item.variantOf.length > 0}
+			<DictionarySection title="Variant of">
+				<SeparatedList items={entry.item.variantOf}>
+					{#snippet item(variant)}
+						<ClickableHanziText text={variant} {dictionary} current={entry} />
+					{/snippet}
+				</SeparatedList>
+			</DictionarySection>
+		{/if}
+
 		{#if entry.item.english.length > 0}
 			<DictionarySection title="Meanings">
 				<SeparatedList items={entry.item.english} lang="en" class="font-serif italic">

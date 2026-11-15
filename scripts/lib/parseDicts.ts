@@ -1,4 +1,4 @@
-import type { DictEntry, Hanzi, StrokeData, Word } from '../../src/lib/dictionary/types.ts';
+import type { Common, DictEntry, Hanzi, StrokeData, Word } from '../../src/lib/dictionary/types.ts';
 import readLines from './readLines.ts';
 
 type Source = 'unicode' | 'academia-sinica' | 'makemeahanzi' | 'baxter-sagart' | 'dong-chinese';
@@ -145,6 +145,48 @@ const mapHSK = (level: number | undefined): number | null => {
 	return level;
 };
 
+const CEDICT_REFERENCE = /(\p{Script=Han}+)(?:\|(\p{Script=Han}+))?/u;
+const parseCEDICTReference = (ref: string): string => {
+	const match = ref.match(CEDICT_REFERENCE);
+	if (!match) return ref;
+	const [, trad, simp] = match;
+	return simp ?? trad;
+};
+
+// Matches only definitions that are simple single word enumerations
+const SIMPLE_ENUMERATION = /^([a-z]+\s*,\s*)+[a-z]+\s*$/i;
+const DEFINITION_COMMA_SPLIT = /\s*,\s*/;
+const VARIANT_DEF = /^(?:old |archaic |erhua |Japanese |Taiwan )?variant of (.*)$/i;
+type Definitions = { variantOf: string[]; countingWords: string[]; english: string[] };
+const parseDefinitions = (item: WordEntryItem): Definitions => {
+	let items = item.definitions ?? [];
+
+	// The Unicode source often contains a single definition containing multiple words
+	// So we use a conservative heuristic here to split these on a best effort basis.
+	// The regex must be so conservative, so that definitions like `to receive, as communications` don't get split
+	if (item.source === 'unicode') {
+		items = items.flatMap((def) =>
+			SIMPLE_ENUMERATION.test(def) ? def.trim().split(DEFINITION_COMMA_SPLIT) : [def]
+		);
+	}
+
+	const variantOf: string[] = [];
+	const countingWords: string[] = [];
+	const english: string[] = [];
+
+	// TODO: Handle counting words
+	items.forEach((it) => {
+		const reference = it.match(VARIANT_DEF);
+		if (reference !== null) {
+			variantOf.push(parseCEDICTReference(reference[1]));
+		} else {
+			english.push(it);
+		}
+	});
+
+	return { variantOf, countingWords, english };
+};
+
 const parseChar = (entry: Entry): Hanzi | null => {
 	if (isNonHskVariant(entry) || isTraditionalOnly(entry)) {
 		return null;
@@ -170,36 +212,29 @@ const parseChar = (entry: Entry): Hanzi | null => {
 		medians: sourceStrokeData.medians
 	};
 
+	const definitions = parseDefinitions({ definitions: entry.gloss ? [entry.gloss] : undefined });
+	const variantOf = [
+		...new Set([...definitions.variantOf, ...(entry.variantOf ? [entry.variantOf] : [])])
+	];
 	return {
 		text: entry.char,
 		// Chars have no traditional / simplified information, that will be populated by `expandHanziWithWord`
 		traditional: [],
 		frequency,
 		pinyins: pinyins.map((it) => it.text),
-		english: [entry?.gloss ?? ''],
+		english: definitions.english,
+		variantOf,
 		characterHint: entry?.hint ?? '',
 		hskLevel: mapHSK(entry?.statistics?.hskLevel),
 		strokeData
 	};
 };
 
-// Matches only definitions that are simple single word enumerations
-const SIMPLE_ENUMERATION = /^([a-z]+\s*,\s*)+[a-z]+\s*$/i;
-const DEFINITION_COMMA_SPLIT = /\s*,\s*/;
-const parseDefinitions = (item: WordEntryItem): string[] => {
-	let definitions = item.definitions ?? [];
-
-	// The Unicode source often contains a single definition containing multiple words
-	// So we use a conservative heuristic here to split these on a best effort basis.
-	// The regex must be so conservative, so that definitions like `to receive, as communications` don't get split
-	if (item.source === 'unicode') {
-		definitions = definitions.flatMap((def) =>
-			SIMPLE_ENUMERATION.test(def) ? def.trim().split(DEFINITION_COMMA_SPLIT) : [def]
-		);
-	}
-
-	return definitions;
-};
+const combineDefinitions = (definitions: Definitions[]): Definitions => ({
+	variantOf: [...new Set(definitions.flatMap((it) => it.variantOf))],
+	countingWords: [...new Set(definitions.flatMap((it) => it.countingWords))],
+	english: [...new Set(definitions.flatMap((it) => it.english))]
+});
 
 const parseWord = (entry: WordEntry): Word | null => {
 	const frequency = entry.statistics?.bookWordCountPercent ?? null;
@@ -212,20 +247,21 @@ const parseWord = (entry: WordEntry): Word | null => {
 	);
 
 	const preferredSource = 'cedict';
-	let rawEnglish = entry.items
-		.filter((it) => it.source === preferredSource)
-		.flatMap((it) => parseDefinitions(it));
-	if (rawEnglish.length === 0) {
-		rawEnglish = entry.items.flatMap((it) => parseDefinitions(it));
+	const definitions = combineDefinitions(
+		entry.items.filter((it) => it.source === preferredSource).map((it) => parseDefinitions(it))
+	);
+	if (definitions.english.length === 0) {
+		definitions.english = combineDefinitions(
+			entry.items.flatMap((it) => parseDefinitions(it))
+		).english;
 	}
-	// TODO: Parse classifiers (number words, instead of stripping them)
-	const english = new Set(rawEnglish.filter((it) => !it.startsWith('CL:')));
 
 	return {
 		text: entry.simp,
 		traditional: entry.trad === entry.simp ? [] : [entry.trad],
 		pinyins: [...pinyins],
-		english: [...english],
+		english: definitions.english,
+		variantOf: definitions.variantOf,
 		frequency,
 		hskLevel: mapHSK(entry.statistics?.hskLevel)
 	};
@@ -241,6 +277,7 @@ const mergeWords = (lhs: Word, rhs: Word): Word => ({
 	traditional: [...new Set([...lhs.traditional, ...rhs.traditional])],
 	pinyins: [...new Set([...lhs.pinyins, ...rhs.pinyins])],
 	english: [...new Set([...lhs.english, ...rhs.english])],
+	variantOf: [...new Set([...lhs.variantOf, ...rhs.variantOf])],
 	frequency: Math.max(lhs.frequency, rhs.frequency),
 	hskLevel: minIgnoringNull(lhs.hskLevel, rhs.hskLevel)
 });
@@ -252,9 +289,15 @@ const expandHanziWithWord = (hanzi: Hanzi, word: Word): Hanzi => {
 	return {
 		...hanzi,
 		traditional: word.traditional ?? hanzi.traditional,
-		english: word.english ?? hanzi.english
+		english: [...new Set([...word.english, ...hanzi.english])],
+		variantOf: [...new Set([...word.variantOf, ...hanzi.variantOf])]
 	};
 };
+
+const removeSelfVariants = <T extends Common>(entry: T): T => ({
+	...entry,
+	variantOf: entry.variantOf.filter((it) => it !== entry.text && !entry.traditional.includes(it))
+});
 
 export default async (dictionaryPath: string): Promise<DictEntry[]> => {
 	const chars: Hanzi[] = [];
@@ -296,11 +339,11 @@ export default async (dictionaryPath: string): Promise<DictEntry[]> => {
 	});
 
 	const entries: DictEntry[] = [
-		...combinedChars.map((it): DictEntry => ({ type: 'hanzi', item: it })),
+		...combinedChars.map((it): DictEntry => ({ type: 'hanzi', item: removeSelfVariants(it) })),
 		...words
 			.values()
 			.filter((it) => Array.from(it.text).length > 1)
-			.map((it): DictEntry => ({ type: 'word', item: it }))
+			.map((it): DictEntry => ({ type: 'word', item: removeSelfVariants(it) }))
 	];
 	entries.sort((a, b) => b.item.frequency - a.item.frequency);
 
