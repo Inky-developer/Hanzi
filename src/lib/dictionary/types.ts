@@ -13,6 +13,9 @@ export const dictEntryEq = (lhs: DictEntry, rhs: DictEntry): boolean =>
 
 export type Common = {
 	text: string;
+	// Simplified variants always take precedence in this app.
+	// `traditional` only contains traditional variants that are different to the simplified text.
+	traditional: string[];
 	pinyins: string[];
 	english: string[];
 	/**

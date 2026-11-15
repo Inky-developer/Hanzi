@@ -19,8 +19,13 @@ export class Dictionary {
 	) {}
 
 	static fromStorage(data: DictEntry[]): Dictionary {
-		const buildWordIndex = (data: DictEntry[]): Record<string, number> =>
-			Object.fromEntries(data.map((entry, index) => [entry.item.text, index]));
+		const buildWordIndex = (data: DictEntry[]): Record<string, number> => {
+			// Simplified text has precedence over traditional text
+			const index: Record<string, number> = {};
+			data.forEach((entry, i) => (index[entry.item.text] ??= i));
+			data.forEach((entry, i) => entry.item.traditional.forEach((trad) => (index[trad] ??= i)));
+			return index;
+		};
 
 		const buildIndex = (entries: DictEntry[], getKey: (entry: DictEntry) => string[]): Index[] => {
 			const groups = groupByKey(

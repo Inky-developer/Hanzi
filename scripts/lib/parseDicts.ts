@@ -170,6 +170,8 @@ const parseChar = (entry: Entry): Hanzi | null => {
 
 	return {
 		text: entry.char,
+		// Chars have no traditional / simplified information, that will be populated by `expandHanziWithWord`
+		traditional: [],
 		frequency,
 		pinyins: pinyins.map((it) => it.text),
 		english: [entry?.gloss ?? ''],
@@ -195,6 +197,7 @@ const parseWord = (entry: WordEntry): Word | null => {
 	);
 	return {
 		text: entry.simp,
+		traditional: entry.trad === entry.simp ? [] : [entry.trad],
 		pinyins: [...pinyins],
 		english: [...english],
 		frequency,
@@ -209,6 +212,7 @@ const minIgnoringNull = (a: number | null, b: number | null): number | null =>
 // Their frequency statistics are the same, so the frequencies shouldn't be added.
 const mergeWords = (lhs: Word, rhs: Word): Word => ({
 	text: lhs.text,
+	traditional: [...new Set([...lhs.traditional, ...rhs.traditional])],
 	pinyins: [...new Set([...lhs.pinyins, ...rhs.pinyins])],
 	english: [...new Set([...lhs.english, ...rhs.english])],
 	frequency: Math.max(lhs.frequency, rhs.frequency),
@@ -221,6 +225,7 @@ const mergeWords = (lhs: Word, rhs: Word): Word => ({
 const expandHanziWithWord = (hanzi: Hanzi, word: Word): Hanzi => {
 	return {
 		...hanzi,
+		traditional: word.traditional ?? hanzi.traditional,
 		english: word.english ?? hanzi.english
 	};
 };

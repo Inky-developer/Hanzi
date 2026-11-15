@@ -4,7 +4,7 @@
 	import Hanzi from '$lib/dictionary/Hanzi.svelte';
 	import DictionarySection from '$lib/components/DictionarySection.svelte';
 	import ClickableHanziText from '$lib/components/ClickableHanziText.svelte';
-	import { resolve } from '$app/paths';
+	import SeparatedList from '$lib/components/SeparatedList.svelte';
 
 	const { entry, dictionary }: { entry: DictEntry; dictionary: Dictionary } = $props();
 
@@ -20,40 +20,40 @@
 		</div>
 	</header>
 
-	<div class="scroll-thin flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-6 py-4">
+	<div
+		class="scroll-thin flex min-h-0 flex-1 flex-row flex-wrap justify-between gap-5 overflow-y-auto px-6 py-4"
+	>
 		<DictionarySection title="Simplified">
-			{#each Array.from(entry.item.text) as char, index (index)}
-				<a class="hover:underline" href={resolve('/dict/[word]', { word: char })}>
-					{char}
-				</a>
-			{/each}
+			<ClickableHanziText {dictionary} text={entry.item.text} />
 		</DictionarySection>
+
+		{#if entry.item.traditional.length > 0}
+			<DictionarySection title="Traditional">
+				<SeparatedList items={entry.item.traditional}>
+					{#snippet item(traditional)}
+						<ClickableHanziText {dictionary} text={traditional} />
+					{/snippet}
+				</SeparatedList>
+			</DictionarySection>
+		{/if}
 
 		{#if entry.item.pinyins.length > 0}
 			<DictionarySection title="Pinyin">
-				<ul class="flex flex-wrap items-baseline gap-x-1.5">
-					{#each entry.item.pinyins as pinyin (pinyin)}
-						<li
-							class="not-first:before:mr-1.5 not-first:before:text-paper-300 not-first:before:content-['·'] dark:not-first:before:text-paper-700"
-						>
-							{pinyin}
-						</li>
-					{/each}
-				</ul>
+				<SeparatedList items={entry.item.pinyins}>
+					{#snippet item(pinyin)}
+						{pinyin}
+					{/snippet}
+				</SeparatedList>
 			</DictionarySection>
 		{/if}
 
 		{#if entry.item.english.length > 0}
 			<DictionarySection title="Meanings">
-				<ul lang="en" class="flex flex-wrap items-baseline gap-x-1.5 font-serif italic">
-					{#each entry.item.english as english (english)}
-						<li
-							class="not-first:before:mr-1.5 not-first:before:text-paper-300 not-first:before:content-['·'] dark:not-first:before:text-paper-700"
-						>
-							<ClickableHanziText text={english} {dictionary} />
-						</li>
-					{/each}
-				</ul>
+				<SeparatedList items={entry.item.english} lang="en" class="font-serif italic">
+					{#snippet item(english)}
+						<ClickableHanziText text={english} {dictionary} />
+					{/snippet}
+				</SeparatedList>
 			</DictionarySection>
 		{/if}
 
