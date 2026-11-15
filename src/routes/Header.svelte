@@ -80,6 +80,7 @@
 			{/snippet}
 			<dialog
 				bind:this={dialog}
+				closedby="any"
 				class="m-auto w-full rounded-xl shadow-2xl shadow-black backdrop:bg-paper-900/40 backdrop:backdrop-blur-md"
 			>
 				{#if dictionary}
