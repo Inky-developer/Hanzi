@@ -62,13 +62,9 @@
 			</DictionarySection>
 		{/if}
 
-		{#if entry.type === 'hanzi' && (entry.item.characterHint.length > 0 || entry.item.originalMeaning.length > 0)}
+		{#if entry.type === 'hanzi' && entry.item.characterHint.length > 0}
 			<DictionarySection title="Glossary">
 				<ClickableHanziText text={entry.item.characterHint} {dictionary} current={entry} />
-				<br />
-				{#if entry.item.originalMeaning.length > 0}
-					Original meaning: {entry.item.originalMeaning}
-				{/if}
 			</DictionarySection>
 		{/if}
 
