@@ -110,17 +110,19 @@ type Entry = {
 	statistics?: CharacterStatistics;
 };
 
+type WordEntryItem = {
+	source?: 'unicode' | 'cedict';
+	pinyin?: string;
+	simpTrad?: 'both';
+	definitions?: string[];
+};
+
 type WordEntry = {
 	_id: string;
 	simp: string;
 	trad: string;
 	gloss: string;
-	items: {
-		source?: 'unicode' | 'cedict';
-		pinyin?: string;
-		simpTrad?: 'both';
-		definitions?: string[];
-	}[];
+	items: WordEntryItem[];
 	pinyinSearchString: string;
 	statistics?: CharacterStatistics;
 };
@@ -181,6 +183,24 @@ const parseChar = (entry: Entry): Hanzi | null => {
 	};
 };
 
+// Matches only definitions that are simple single word enumerations
+const SIMPLE_ENUMERATION = /^([a-z]+\s*,\s*)+[a-z]+\s*$/i;
+const DEFINITION_COMMA_SPLIT = /\s*,\s*/;
+const parseDefinitions = (item: WordEntryItem): string[] => {
+	let definitions = item.definitions ?? [];
+
+	// The Unicode source often contains a single definition containing multiple words
+	// So we use a conservative heuristic here to split these on a best effort basis.
+	// The regex must be so conservative, so that definitions like `to receive, as communications` don't get split
+	if (item.source === 'unicode') {
+		definitions = definitions.flatMap((def) =>
+			SIMPLE_ENUMERATION.test(def) ? def.trim().split(DEFINITION_COMMA_SPLIT) : [def]
+		);
+	}
+
+	return definitions;
+};
+
 const parseWord = (entry: WordEntry): Word | null => {
 	const frequency = entry.statistics?.bookWordCountPercent ?? null;
 	if (frequency === null) {
@@ -192,7 +212,7 @@ const parseWord = (entry: WordEntry): Word | null => {
 	);
 	// TODO: Parse classifiers (number words, instead of stripping them)
 	const english = new Set(
-		entry.items.flatMap((it) => it.definitions ?? []).filter((it) => !it.startsWith('CL:'))
+		entry.items.flatMap((it) => parseDefinitions(it)).filter((it) => !it.startsWith('CL:'))
 	);
 	return {
 		text: entry.simp,
