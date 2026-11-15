@@ -62,6 +62,17 @@
 			</DictionarySection>
 		{/if}
 
+		{#if entry.item.countingWords.length > 0}
+			{@const title = entry.item.countingWords.length === 1 ? 'Counting word' : 'Counting words'}
+			<DictionarySection {title}>
+				<SeparatedList items={entry.item.countingWords}>
+					{#snippet item(word)}
+						<ClickableHanziText text={word} {dictionary} current={entry} />
+					{/snippet}
+				</SeparatedList>
+			</DictionarySection>
+		{/if}
+
 		{#if entry.item.english.length > 0}
 			<DictionarySection title="Meanings">
 				<SeparatedList items={entry.item.english} lang="en" class="font-serif italic">

@@ -157,6 +157,8 @@ const parseCEDICTReference = (ref: string): string => {
 const SIMPLE_ENUMERATION = /^([a-z]+\s*,\s*)+[a-z]+\s*$/i;
 const DEFINITION_COMMA_SPLIT = /\s*,\s*/;
 const VARIANT_DEF = /^(?:old |archaic |erhua |Japanese |Taiwan )?variant of (.*)$/i;
+// Counting words
+const CL_DEF = /^CL:(.+)$/i;
 type Definitions = { variantOf: string[]; countingWords: string[]; english: string[] };
 const parseDefinitions = (item: WordEntryItem): Definitions => {
 	let items = item.definitions ?? [];
@@ -176,12 +178,20 @@ const parseDefinitions = (item: WordEntryItem): Definitions => {
 
 	// TODO: Handle counting words
 	items.forEach((it) => {
+		const cl_match = it.match(CL_DEF);
+		if (cl_match !== null) {
+			const words = cl_match[1].split(',').map(parseCEDICTReference);
+			countingWords.push(...words);
+			return;
+		}
+
 		const reference = it.match(VARIANT_DEF);
 		if (reference !== null) {
 			variantOf.push(parseCEDICTReference(reference[1]));
-		} else {
-			english.push(it);
+			return;
 		}
+
+		english.push(it);
 	});
 
 	return { variantOf, countingWords, english };
@@ -224,6 +234,7 @@ const parseChar = (entry: Entry): Hanzi | null => {
 		pinyins: pinyins.map((it) => it.text),
 		english: definitions.english,
 		variantOf,
+		countingWords: [],
 		characterHint: entry?.hint ?? '',
 		hskLevel: mapHSK(entry?.statistics?.hskLevel),
 		strokeData
@@ -262,6 +273,7 @@ const parseWord = (entry: WordEntry): Word | null => {
 		pinyins: [...pinyins],
 		english: definitions.english,
 		variantOf: definitions.variantOf,
+		countingWords: definitions.countingWords,
 		frequency,
 		hskLevel: mapHSK(entry.statistics?.hskLevel)
 	};
@@ -278,6 +290,7 @@ const mergeWords = (lhs: Word, rhs: Word): Word => ({
 	pinyins: [...new Set([...lhs.pinyins, ...rhs.pinyins])],
 	english: [...new Set([...lhs.english, ...rhs.english])],
 	variantOf: [...new Set([...lhs.variantOf, ...rhs.variantOf])],
+	countingWords: [...new Set([...lhs.countingWords, ...rhs.countingWords])],
 	frequency: Math.max(lhs.frequency, rhs.frequency),
 	hskLevel: minIgnoringNull(lhs.hskLevel, rhs.hskLevel)
 });
@@ -290,7 +303,8 @@ const expandHanziWithWord = (hanzi: Hanzi, word: Word): Hanzi => {
 		...hanzi,
 		traditional: word.traditional ?? hanzi.traditional,
 		english: [...new Set([...word.english, ...hanzi.english])],
-		variantOf: [...new Set([...word.variantOf, ...hanzi.variantOf])]
+		variantOf: [...new Set([...word.variantOf, ...hanzi.variantOf])],
+		countingWords: [...new Set([...word.countingWords, ...hanzi.countingWords])]
 	};
 };
 

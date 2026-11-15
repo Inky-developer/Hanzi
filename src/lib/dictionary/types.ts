@@ -19,6 +19,7 @@ export type Common = {
 	pinyins: string[];
 	english: string[];
 	variantOf: string[];
+	countingWords: string[];
 	/**
 	 * Share of all characters (for hanzi) or all words (for words) in the book corpus.
 	 * Raw counts are not used, since the word corpus is much larger than the character corpus.
