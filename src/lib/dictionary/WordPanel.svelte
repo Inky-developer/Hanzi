@@ -6,6 +6,7 @@
 	import ClickableHanziText from '$lib/components/ClickableHanziText.svelte';
 	import SeparatedList from '$lib/components/SeparatedList.svelte';
 	import DictionaryLink from '$lib/components/DictionaryLink.svelte';
+	import Speaker from '$lib/components/Speaker.svelte';
 
 	const { entry, dictionary }: { entry: DictEntry; dictionary: Dictionary } = $props();
 
@@ -25,18 +26,23 @@
 		class="scroll-thin flex min-h-0 flex-1 flex-row flex-wrap justify-between gap-5 overflow-y-auto px-6 py-4"
 	>
 		<DictionarySection title="Simplified">
-			{#each Array.from(entry.item.text) as char, index (index)}
-				<DictionaryLink {dictionary} text={char} current={entry} />
-			{/each}
+			<span class="flex flex-row items-center gap-1">
+				{#each Array.from(entry.item.text) as char, index (index)}
+					<DictionaryLink {dictionary} text={char} current={entry} />
+				{/each}
+				<Speaker text={entry.item.text} class="pl-2" />
+			</span>
 		</DictionarySection>
 
 		{#if entry.item.traditional.length > 0}
 			<DictionarySection title="Traditional">
 				<SeparatedList items={entry.item.traditional}>
 					{#snippet item(traditional)}
-						{#each Array.from(traditional) as char, index (index)}
-							<DictionaryLink {dictionary} text={char} current={entry} />
-						{/each}
+						<span class="row flex items-center gap-1">
+							{#each Array.from(traditional) as char, index (index)}
+								<DictionaryLink {dictionary} text={char} current={entry} />
+							{/each}
+						</span>
 					{/snippet}
 				</SeparatedList>
 			</DictionarySection>
