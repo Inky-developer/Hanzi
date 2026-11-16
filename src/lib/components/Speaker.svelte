@@ -16,7 +16,7 @@
 		// The dot helps with fade out
 		const utterance = new SpeechSynthesisUtterance(text + '。');
 		utterance.lang = 'zh-CN';
-		utterance.rate = 0.25;
+		utterance.rate = 0.5;
 		utterance.onend = () => {
 			speaking = false;
 		};
