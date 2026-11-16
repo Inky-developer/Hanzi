@@ -1,9 +1,9 @@
 <script lang="ts">
 	import {
-		type Dictionary,
 		textMatchLength,
 		normalizePinyinSearch,
-		normalizeEnglishSearch
+		normalizeEnglishSearch,
+		EMPTY_DICTIONARY
 	} from '$lib/dictionary/dictionary';
 	import { type DictEntry, dictEntryEq } from '$lib/dictionary/types';
 	import { resolve } from '$app/paths';
@@ -14,12 +14,11 @@
 	} from '$lib/dictionary/searchState.svelte';
 	import { goto } from '$app/navigation';
 	import { Search as SearchIcon } from '@lucide/svelte';
+	import { dictionary } from '$lib/dictionary/dictionaryState.svelte';
 
 	const {
-		dictionary,
 		selected
 	}: {
-		dictionary: Dictionary;
 		selected: DictEntry | null;
 	} = $props();
 
@@ -40,7 +39,7 @@
 			title: 'Search Pinyin',
 			description: 'Enter a word in pinyin, for example `gong`',
 			short: 'P',
-			search: (it) => dictionary.searchPinyin(it),
+			search: (it) => dictionary().searchPinyin(it),
 			project: (it) => it.item.pinyins,
 			normalize: normalizePinyinSearch
 		},
@@ -48,7 +47,7 @@
 			title: 'Search Hanzi',
 			description: 'Enter hanzi, for example `工`',
 			short: 'H',
-			search: (it) => dictionary.searchHanzi(it),
+			search: (it) => dictionary().searchHanzi(it),
 			project: (it) => [it.item.text],
 			normalize: (it) => it.trim()
 		},
@@ -56,7 +55,7 @@
 			title: 'Search English',
 			description: 'Enter an English word, for example `work`',
 			short: 'E',
-			search: (it) => dictionary.searchEnglish(it),
+			search: (it) => dictionary().searchEnglish(it),
 			project: (it) => it.item.english,
 			normalize: normalizeEnglishSearch
 		}
@@ -96,6 +95,7 @@
 			<input
 				bind:value={search.query}
 				onkeydown={onKeyDown}
+				autofocus
 				type="search"
 				autocomplete="off"
 				spellcheck="false"
@@ -118,7 +118,9 @@
 			class="border-y border-paper-100 px-4 py-1.5 text-[0.7rem] tracking-wide text-paper-500 uppercase dark:border-paper-800 dark:text-paper-400"
 			aria-live="polite"
 		>
-			{#if results.length === 0}
+			{#if dictionary() === EMPTY_DICTIONARY}
+				<span class="animate-pulse">Loading</span>
+			{:else if results.length === 0}
 				No results
 			{:else if results.length > MAX_RESULTS}
 				{MAX_RESULTS} of {results.length} results

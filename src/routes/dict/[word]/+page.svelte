@@ -1,8 +1,10 @@
 <script lang="ts">
 	import type { PageProps } from './$types';
 	import DictionaryComponent from '$lib/dictionary/Dictionary.svelte';
+	import { dictionary } from '$lib/dictionary/dictionaryState.svelte';
 
-	const { params, data }: PageProps = $props();
+	const { params }: PageProps = $props();
+	const entry = $derived(dictionary().lookup(params.word));
 </script>
 
 <svelte:head>
@@ -10,18 +12,4 @@
 	<meta name="description" content="Chinese Dictionary" />
 </svelte:head>
 
-{#snippet loading()}
-	<div class="w-full text-center">Loading dictionary...</div>
-{/snippet}
-{#if data.dictionary}
-	{#await data.dictionary}
-		{@render loading()}
-	{:then dictionary}
-		{@const entry = dictionary.lookup(params.word)}
-		<DictionaryComponent {dictionary} {entry} />
-	{:catch}
-		<div class="w-full text-center">Failed to load data</div>
-	{/await}
-{:else}
-	{@render loading()}
-{/if}
+<DictionaryComponent {entry} />

@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { type DictEntry } from '$lib/dictionary/types';
-	import type { Dictionary } from '$lib/dictionary/dictionary';
 	import Hanzi from '$lib/dictionary/Hanzi.svelte';
 	import DictionarySection from '$lib/components/DictionarySection.svelte';
 	import ClickableHanziText from '$lib/components/ClickableHanziText.svelte';
@@ -8,7 +7,7 @@
 	import DictionaryLink from '$lib/components/DictionaryLink.svelte';
 	import Speaker from '$lib/components/Speaker.svelte';
 
-	const { entry, dictionary }: { entry: DictEntry; dictionary: Dictionary } = $props();
+	const { entry }: { entry: DictEntry } = $props();
 
 	const hanzis = $derived(Array.from(entry.item.text));
 </script>
@@ -17,7 +16,7 @@
 	<header class="border-b border-paper-100 px-6 py-4 dark:border-paper-800">
 		<div class="flex flex-wrap items-baseline justify-center gap-x-3 gap-y-1">
 			{#each hanzis as hanzi, index (index)}
-				<Hanzi {dictionary} char={hanzi} />
+				<Hanzi char={hanzi} />
 			{/each}
 		</div>
 	</header>
@@ -28,7 +27,7 @@
 		<DictionarySection title="Simplified">
 			<span class="flex flex-row items-center gap-1">
 				{#each Array.from(entry.item.text) as char, index (index)}
-					<DictionaryLink {dictionary} text={char} current={entry} />
+					<DictionaryLink text={char} current={entry} />
 				{/each}
 				<Speaker text={entry.item.text} class="pl-2" />
 			</span>
@@ -40,7 +39,7 @@
 					{#snippet item(traditional)}
 						<span class="row flex items-center gap-1">
 							{#each Array.from(traditional) as char, index (index)}
-								<DictionaryLink {dictionary} text={char} current={entry} />
+								<DictionaryLink text={char} current={entry} />
 							{/each}
 						</span>
 					{/snippet}
@@ -62,7 +61,7 @@
 			<DictionarySection title="Variant of">
 				<SeparatedList items={entry.item.variantOf}>
 					{#snippet item(variant)}
-						<ClickableHanziText text={variant} {dictionary} current={entry} />
+						<ClickableHanziText text={variant} current={entry} />
 					{/snippet}
 				</SeparatedList>
 			</DictionarySection>
@@ -73,7 +72,7 @@
 			<DictionarySection {title}>
 				<SeparatedList items={entry.item.countingWords}>
 					{#snippet item(word)}
-						<ClickableHanziText text={word} {dictionary} current={entry} />
+						<ClickableHanziText text={word} current={entry} />
 					{/snippet}
 				</SeparatedList>
 			</DictionarySection>
@@ -83,7 +82,7 @@
 			<DictionarySection title="Meanings">
 				<SeparatedList items={entry.item.english} lang="en" class="font-serif italic">
 					{#snippet item(english)}
-						<ClickableHanziText text={english} {dictionary} current={entry} />
+						<ClickableHanziText text={english} current={entry} />
 					{/snippet}
 				</SeparatedList>
 			</DictionarySection>
@@ -91,7 +90,7 @@
 
 		{#if entry.type === 'hanzi' && entry.item.characterHint.length > 0}
 			<DictionarySection title="Glossary">
-				<ClickableHanziText text={entry.item.characterHint} {dictionary} current={entry} />
+				<ClickableHanziText text={entry.item.characterHint} current={entry} />
 			</DictionarySection>
 		{/if}
 

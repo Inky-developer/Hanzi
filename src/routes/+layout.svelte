@@ -3,14 +3,18 @@
 	import './layout.css';
 	import { SearchState, setSearchState } from '$lib/dictionary/searchState.svelte';
 	import type { LayoutProps } from './$types.js';
+	import { setDictionary } from '$lib/dictionary/dictionaryState.svelte';
 
 	let { children, data }: LayoutProps = $props();
 
 	setSearchState(new SearchState());
+	$effect(() => {
+		data.dictionary?.then((it) => setDictionary(it));
+	});
 </script>
 
 <div class="flex min-h-screen flex-col">
-	<Header commonHanzi={data.commonHanzi} dictionary={data.dictionary} />
+	<Header commonHanzi={data.commonHanzi} />
 
 	<main class="mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 py-8 sm:px-6 sm:py-12">
 		{@render children()}

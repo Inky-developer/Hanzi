@@ -1,8 +1,5 @@
 <script lang="ts">
-	import type { PageProps } from './$types';
 	import Search from '$lib/dictionary/Search.svelte';
-
-	let { data }: PageProps = $props();
 </script>
 
 <svelte:head>
@@ -19,20 +16,5 @@
 		</h1>
 	</div>
 
-	<!--	Dictionary is not loaded during pre-rendering.-->
-	<!--	Only show the search once the dictionary has loaded.-->
-	{#snippet loading()}
-		<div class="w-full text-center">Loading dictionary...</div>
-	{/snippet}
-	{#if data.dictionary}
-		{#await data.dictionary}
-			{@render loading()}
-		{:then dictionary}
-			<Search {dictionary} selected={null} />
-		{:catch}
-			<div class="w-full text-center">Failed to load data</div>
-		{/await}
-	{:else}
-		{@render loading()}
-	{/if}
+	<Search selected={null} />
 </section>

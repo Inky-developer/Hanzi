@@ -2,15 +2,11 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { onMount } from 'svelte';
-	import type { Dictionary } from '$lib/dictionary/dictionary';
 	import Search from '$lib/dictionary/Search.svelte';
 	import { Search as SearchIcon } from '@lucide/svelte';
 	import { afterNavigate } from '$app/navigation';
 
-	const {
-		commonHanzi,
-		dictionary
-	}: { commonHanzi: string[]; dictionary: Promise<Dictionary> | null } = $props();
+	const { commonHanzi }: { commonHanzi: string[] } = $props();
 	const MILLISECONDS_PER_DAY = 86_400_000;
 
 	const localDayNumber = (date: Date): number =>
@@ -73,27 +69,12 @@
 				<SearchIcon class="mx-3 size-4 text-paper-500 dark:text-paper-400" />
 			</button>
 
-			<!--	Dictionary is not loaded during pre-rendering.-->
-			<!--	Only show the search once the dictionary has loaded.-->
-			{#snippet loading()}
-				<div class="w-full text-center">Loading dictionary...</div>
-			{/snippet}
 			<dialog
 				bind:this={dialog}
 				closedby="any"
 				class="m-auto w-full rounded-xl shadow-2xl shadow-black backdrop:bg-paper-900/40 backdrop:backdrop-blur-md"
 			>
-				{#if dictionary}
-					{#await dictionary}
-						{@render loading()}
-					{:then dictionary}
-						<Search {dictionary} selected={null} />
-					{:catch}
-						<div class="w-full text-center">Failed to load data</div>
-					{/await}
-				{:else}
-					{@render loading()}
-				{/if}
+				<Search selected={null} />
 			</dialog>
 		</nav>
 	</div>

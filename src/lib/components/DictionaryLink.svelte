@@ -1,15 +1,11 @@
 <script lang="ts">
-	import type { Dictionary } from '$lib/dictionary/dictionary';
 	import { resolve } from '$app/paths';
 	import type { DictEntry } from '$lib/dictionary/types';
+	import { dictionary } from '$lib/dictionary/dictionaryState.svelte';
 
-	const {
-		dictionary,
-		text,
-		current
-	}: { dictionary: Dictionary; text: string; current: DictEntry | null } = $props();
+	const { text, current }: { text: string; current: DictEntry | null } = $props();
 
-	const entry = $derived(dictionary.lookup(text));
+	const entry = $derived(dictionary().lookup(text));
 </script>
 
 {#if entry !== null && entry !== current}

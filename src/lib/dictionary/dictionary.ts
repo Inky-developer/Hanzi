@@ -93,6 +93,8 @@ export class Dictionary {
 	}
 }
 
+export const EMPTY_DICTIONARY = Dictionary.fromStorage([]);
+
 export const normalizePinyinSearch = (pinyin: string): string =>
 	removeToneMarks(pinyin.trim()).toLowerCase();
 

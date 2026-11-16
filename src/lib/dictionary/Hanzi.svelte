@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Dictionary } from '$lib/dictionary/dictionary';
+	import { dictionary } from '$lib/dictionary/dictionaryState.svelte';
 
 	type Point = [number, number];
 
@@ -7,10 +7,10 @@
 	const MEDIAN_STROKE_WIDTH = 128;
 	const DRAWING_SPEED_UNITS_PER_SECOND = 800;
 
-	const { char, dictionary }: { char: string; dictionary: Dictionary } = $props();
+	const { char }: { char: string } = $props();
 	const id = $props.id();
 
-	const hanzi = $derived(dictionary.lookupHanzi(char));
+	const hanzi = $derived(dictionary().lookupHanzi(char));
 	let replayCount = $state(0);
 
 	const distance = ([x1, y1]: Point, [x2, y2]: Point): number => Math.hypot(x2 - x1, y2 - y1);
