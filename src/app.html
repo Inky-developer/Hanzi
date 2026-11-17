@@ -10,6 +10,13 @@
 		<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#201c18" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="text-scale" content="scale" />
+		<!--	Useful even though the dictionary is cached, because it doesn't have to wait for js this way	-->
+		<link
+			rel="preload"
+			href="%sveltekit.assets%/generated/data.json"
+			as="fetch"
+			crossorigin="anonymous"
+		/>
 		%sveltekit.head%
 	</head>
 	<body data-sveltekit-preload-data="hover">

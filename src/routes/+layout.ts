@@ -11,9 +11,9 @@ export const prerender = true;
  * into the initial HTML page, slowing down the initial load a lot.
  */
 export const load: LayoutLoad = async ({ fetch }) => {
+	const dictionary = browser ? loadDictionary(fetch) : null;
 	const commonHanzi: string[] = await fetch(resolve('/api/common_hanzi.json')).then((it) =>
 		it.json()
 	);
-	const dictionary = browser ? loadDictionary(fetch) : null;
 	return { commonHanzi, dictionary };
 };

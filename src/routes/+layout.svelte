@@ -9,7 +9,12 @@
 
 	setSearchState(new SearchState());
 	$effect(() => {
-		data.dictionary?.then((it) => setDictionary(it));
+		data.dictionary?.then((it) => {
+			setDictionary(it);
+			window.requestIdleCallback(() => {
+				it.buildCaches();
+			});
+		});
 	});
 </script>
 

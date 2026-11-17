@@ -11,49 +11,56 @@ export class Dictionary {
 	constructor(
 		readonly entries: DictEntry[],
 		// Index chinese -> index
-		readonly wordIndex: Record<string, number>,
+		private readonly wordIndex: Map<string, number>,
 		// Index pinyin -> index
-		readonly pinyinIndex: Index[],
+		private pinyinIndex: Index[] | null,
 		// Index meaning -> index
-		readonly englishIndex: Index[]
+		private englishIndex: Index[] | null
 	) {}
 
 	static fromStorage(data: DictEntry[]): Dictionary {
-		const buildWordIndex = (data: DictEntry[]): Record<string, number> => {
+		const buildWordIndex = (data: DictEntry[]): Map<string, number> => {
 			// Simplified text has precedence over traditional text
-			const index: Record<string, number> = {};
-			data.forEach((entry, i) => (index[entry.item.text] ??= i));
-			data.forEach((entry, i) => entry.item.traditional.forEach((trad) => (index[trad] ??= i)));
+			const index: Map<string, number> = new Map();
+			const insertIfMissing = (key: string, i: number) => {
+				if (!index.has(key)) index.set(key, i);
+			};
+			data.forEach((entry, i) => insertIfMissing(entry.item.text, i));
+			data.forEach((entry, i) =>
+				entry.item.traditional.forEach((trad) => insertIfMissing(trad, i))
+			);
 			return index;
 		};
 
-		const buildIndex = (entries: DictEntry[], getKey: (entry: DictEntry) => string[]): Index[] => {
-			const groups = groupByKey(
-				entries.map((_, i) => i),
-				(idx) => getKey(entries[idx])
-			);
-			return groups
-				.entries()
-				.map(([text, dictIndexes]) => ({
-					text,
-					dictIndexes: [...dictIndexes]
-				}))
-				.toArray();
-		};
-
-		const buildPinyinIndex = (entries: DictEntry[]): Index[] =>
-			buildIndex(entries, (entry) => entry.item.pinyins.map((it) => normalizePinyinSearch(it)));
-		const buildEnglishIndex = (entries: DictEntry[]): Index[] =>
-			buildIndex(entries, (entry) => entry.item.english.map((it) => normalizeEnglishSearch(it)));
-
-		const wordIndex = buildWordIndex(data);
-		const searchIndex = buildPinyinIndex(data);
-		const englishIndex = buildEnglishIndex(data);
-		return new Dictionary(data, wordIndex, searchIndex, englishIndex);
+		return new Dictionary(data, buildWordIndex(data), null, null);
 	}
 
+	private buildIndex = (getKey: (entry: DictEntry) => string[]): Index[] => {
+		const groups = groupByKey(
+			this.entries.map((_, i) => i),
+			(idx) => getKey(this.entries[idx])
+		);
+		return Array.from(groups, ([text, dictIndexes]) => ({
+			text,
+			dictIndexes: [...dictIndexes]
+		}));
+	};
+
+	private buildPinyinIndex = (): Index[] =>
+		this.buildIndex((entry) => entry.item.pinyins.map((it) => normalizePinyinSearch(it)));
+	private buildEnglishIndex = (): Index[] =>
+		this.buildIndex((entry) => entry.item.english.map((it) => normalizeEnglishSearch(it)));
+
+	private getPinyinIndex = (): Index[] => (this.pinyinIndex ??= this.buildPinyinIndex());
+	private getEnglishIndex = (): Index[] => (this.englishIndex ??= this.buildEnglishIndex());
+
+	buildCaches = (): void => {
+		this.getPinyinIndex();
+		this.getEnglishIndex();
+	};
+
 	lookup(word: string): DictEntry | null {
-		const index = this.wordIndex[word];
+		const index = this.wordIndex.get(word);
 		if (index === undefined) {
 			return null;
 		}
@@ -79,12 +86,12 @@ export class Dictionary {
 
 	searchPinyin(query: string): DictEntry[] {
 		const needle = normalizePinyinSearch(query);
-		return this.searchIndex(needle, this.pinyinIndex);
+		return this.searchIndex(needle, this.getPinyinIndex());
 	}
 
 	searchEnglish(query: string): DictEntry[] {
 		const needle = normalizeEnglishSearch(query);
-		return this.searchIndex(needle, this.englishIndex);
+		return this.searchIndex(needle, this.getEnglishIndex());
 	}
 
 	searchHanzi(query: string): DictEntry[] {
