@@ -42,5 +42,5 @@ export type StrokeData = {
 
 export type Hanzi = Common & {
 	characterHint: string;
-	strokeData?: StrokeData;
+	strokesIndex?: number;
 };

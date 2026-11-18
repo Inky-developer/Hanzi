@@ -1,7 +1,7 @@
 import type { LayoutLoad } from './$types';
 import { resolve } from '$app/paths';
 import { browser } from '$app/environment';
-import { loadDictionary } from '$lib/dictionary/loadDictionary';
+import { loadDictionary, loadStrokes } from '$lib/dictionary/loadDictionary';
 
 export const prerender = true;
 
@@ -12,8 +12,9 @@ export const prerender = true;
  */
 export const load: LayoutLoad = async ({ fetch }) => {
 	const dictionary = browser ? loadDictionary(fetch) : null;
+	const strokes = browser ? loadStrokes(fetch) : null;
 	const commonHanzi: string[] = await fetch(resolve('/api/common_hanzi.json')).then((it) =>
 		it.json()
 	);
-	return { commonHanzi, dictionary };
+	return { commonHanzi, dictionary, strokes };
 };

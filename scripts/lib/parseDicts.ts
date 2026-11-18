@@ -1,6 +1,11 @@
 import type { Common, DictEntry, Hanzi, StrokeData, Word } from '../../src/lib/dictionary/types.ts';
 import readLines from './readLines.ts';
 
+type StrokedHanzi = Hanzi & { strokeData?: StrokeData };
+
+export type StrokedDictEntry =
+	Exclude<DictEntry, { type: 'hanzi' }> | { type: 'hanzi'; item: StrokedHanzi };
+
 type Source = 'unicode' | 'academia-sinica' | 'makemeahanzi' | 'baxter-sagart' | 'dong-chinese';
 
 type DictStrokeData = {
@@ -197,7 +202,7 @@ const parseDefinitions = (item: WordEntryItem): Definitions => {
 	return { variantOf, countingWords, english };
 };
 
-const parseChar = (entry: Entry): Hanzi | null => {
+const parseChar = (entry: Entry): StrokedHanzi | null => {
 	if (isNonHskVariant(entry) || isTraditionalOnly(entry)) {
 		return null;
 	}
@@ -298,7 +303,7 @@ const mergeWords = (lhs: Word, rhs: Word): Word => ({
 /**
  * Expands the hanzi character information with word definitions
  */
-const expandHanziWithWord = (hanzi: Hanzi, word: Word): Hanzi => {
+const expandHanziWithWord = (hanzi: StrokedHanzi, word: Word): StrokedHanzi => {
 	return {
 		...hanzi,
 		traditional: word.traditional ?? hanzi.traditional,
@@ -313,8 +318,8 @@ const removeSelfVariants = <T extends Common>(entry: T): T => ({
 	variantOf: entry.variantOf.filter((it) => it !== entry.text && !entry.traditional.includes(it))
 });
 
-export default async (dictionaryPath: string): Promise<DictEntry[]> => {
-	const chars: Hanzi[] = [];
+export default async (dictionaryPath: string): Promise<StrokedDictEntry[]> => {
+	const chars: StrokedHanzi[] = [];
 	const words: Map<string, Word> = new Map();
 
 	let lineNumber = 0;
@@ -352,12 +357,15 @@ export default async (dictionaryPath: string): Promise<DictEntry[]> => {
 		return expandHanziWithWord(hanzi, hanziWord);
 	});
 
-	const entries: DictEntry[] = [
-		...combinedChars.map((it): DictEntry => ({ type: 'hanzi', item: removeSelfVariants(it) })),
+	const entries = [
+		...combinedChars.map((it): StrokedDictEntry => ({
+			type: 'hanzi',
+			item: removeSelfVariants(it)
+		})),
 		...words
 			.values()
 			.filter((it) => Array.from(it.text).length > 1)
-			.map((it): DictEntry => ({ type: 'word', item: removeSelfVariants(it) }))
+			.map((it): StrokedDictEntry => ({ type: 'word', item: removeSelfVariants(it) }))
 	];
 	entries.sort((a, b) => b.item.frequency - a.item.frequency);
 

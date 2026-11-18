@@ -1,5 +1,7 @@
 <script lang="ts">
+	import { strokes } from '$lib/dictionary/strokesState.svelte';
 	import { dictionary } from '$lib/dictionary/dictionaryState.svelte';
+	import { fade } from 'svelte/transition';
 
 	type Point = [number, number];
 
@@ -10,7 +12,7 @@
 	const { char }: { char: string } = $props();
 	const id = $props.id();
 
-	const hanzi = $derived(dictionary().lookupHanzi(char));
+	const strokeData = $derived(strokes().lookup(dictionary(), char));
 	let replayCount = $state(0);
 
 	const distance = ([x1, y1]: Point, [x2, y2]: Point): number => Math.hypot(x2 - x1, y2 - y1);
@@ -22,7 +24,6 @@
 		`M ${points.map(([x, y]) => `${x} ${y}`).join(' L ')}`;
 
 	const animatedStrokes = $derived.by(() => {
-		const strokeData = hanzi?.strokeData;
 		if (strokeData === undefined) return undefined;
 
 		let delay = 0;
@@ -40,6 +41,7 @@
 {#if animatedStrokes !== undefined}
 	<button
 		type="button"
+		transition:fade
 		class="cursor-pointer rounded-lg"
 		aria-label="Play {char} again"
 		onclick={() => replayCount++}

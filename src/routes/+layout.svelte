@@ -4,6 +4,7 @@
 	import { SearchState, setSearchState } from '$lib/dictionary/searchState.svelte';
 	import type { LayoutProps } from './$types.js';
 	import { setDictionary } from '$lib/dictionary/dictionaryState.svelte';
+	import { setStrokes } from '$lib/dictionary/strokesState.svelte';
 
 	let { children, data }: LayoutProps = $props();
 
@@ -14,6 +15,9 @@
 			window.requestIdleCallback(() => {
 				it.buildCaches();
 			});
+		});
+		data.strokes?.then((it) => {
+			setStrokes(it);
 		});
 	});
 </script>

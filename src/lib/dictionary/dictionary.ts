@@ -69,7 +69,7 @@ export class Dictionary {
 
 	lookupHanzi(hanzi: string): Hanzi | null {
 		const entry = this.lookup(hanzi);
-		if (!entry || entry.type !== 'hanzi') {
+		if (entry?.type !== 'hanzi') {
 			return null;
 		}
 		return entry.item;
