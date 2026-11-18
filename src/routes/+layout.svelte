@@ -5,6 +5,7 @@
 	import type { LayoutProps } from './$types.js';
 	import { setDictionary } from '$lib/dictionary/dictionaryState.svelte';
 	import { setStrokes } from '$lib/dictionary/strokesState.svelte';
+	import { loadStrokes } from '$lib/dictionary/loadDictionary';
 
 	let { children, data }: LayoutProps = $props();
 
@@ -16,9 +17,7 @@
 				it.buildCaches();
 			});
 		});
-		data.strokes?.then((it) => {
-			setStrokes(it);
-		});
+		loadStrokes(fetch).then(setStrokes);
 	});
 </script>
 

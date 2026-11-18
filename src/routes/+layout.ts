@@ -12,9 +12,8 @@ export const prerender = true;
  */
 export const load: LayoutLoad = async ({ fetch }) => {
 	const dictionary = browser ? loadDictionary(fetch) : null;
-	const strokes = browser ? loadStrokes(fetch) : null;
 	const commonHanzi: string[] = await fetch(resolve('/api/common_hanzi.json')).then((it) =>
 		it.json()
 	);
-	return { commonHanzi, dictionary, strokes };
+	return { commonHanzi, dictionary };
 };
