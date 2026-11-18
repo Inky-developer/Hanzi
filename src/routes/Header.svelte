@@ -2,7 +2,7 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { onMount } from 'svelte';
-	import Search from '$lib/dictionary/Search.svelte';
+	import Search from '$lib/components/Search.svelte';
 	import { Search as SearchIcon } from '@lucide/svelte';
 	import { afterNavigate } from '$app/navigation';
 

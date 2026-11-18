@@ -7,14 +7,10 @@
 	} from '$lib/dictionary/dictionary';
 	import { type DictEntry, dictEntryEq } from '$lib/dictionary/types';
 	import { resolve } from '$app/paths';
-	import {
-		getSearchState,
-		SEARCH_MODES,
-		type SearchMode
-	} from '$lib/dictionary/searchState.svelte';
+	import { getSearchState, SEARCH_MODES, type SearchMode } from '$lib/state/searchState.svelte';
 	import { goto } from '$app/navigation';
 	import { Search as SearchIcon } from '@lucide/svelte';
-	import { dictionary } from '$lib/dictionary/dictionaryState.svelte';
+	import { dictionary } from '$lib/state/dictionaryState.svelte';
 
 	const {
 		selected

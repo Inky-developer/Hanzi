@@ -1,9 +1,9 @@
 <script lang="ts">
-	import Search from '$lib/dictionary/Search.svelte';
-	import WordPanel from '$lib/dictionary/WordPanel.svelte';
+	import Search from '$lib/components/Search.svelte';
+	import WordPanel from '$lib/components/WordPanel.svelte';
 	import type { DictEntry } from '$lib/dictionary/types';
 	import { asset } from '$app/paths';
-	import { dictionary } from '$lib/dictionary/dictionaryState.svelte';
+	import { dictionary } from '$lib/state/dictionaryState.svelte';
 	import { EMPTY_DICTIONARY } from '$lib/dictionary/dictionary';
 
 	const { entry }: { entry: DictEntry | null } = $props();

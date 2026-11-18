@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { strokes } from '$lib/dictionary/strokesState.svelte';
-	import { dictionary } from '$lib/dictionary/dictionaryState.svelte';
+	import { strokes } from '$lib/state/strokesState.svelte';
+	import { dictionary } from '$lib/state/dictionaryState.svelte';
 	import { fade, type FadeParams } from 'svelte/transition';
 
 	type Point = [number, number];

@@ -1,10 +1,10 @@
 <script lang="ts">
 	import Header from './Header.svelte';
 	import './layout.css';
-	import { SearchState, setSearchState } from '$lib/dictionary/searchState.svelte';
+	import { SearchState, setSearchState } from '$lib/state/searchState.svelte';
 	import type { LayoutProps } from './$types.js';
-	import { setDictionary } from '$lib/dictionary/dictionaryState.svelte';
-	import { setStrokes } from '$lib/dictionary/strokesState.svelte';
+	import { setDictionary } from '$lib/state/dictionaryState.svelte';
+	import { setStrokes } from '$lib/state/strokesState.svelte';
 	import { loadStrokes } from '$lib/dictionary/loadDictionary';
 
 	let { children, data }: LayoutProps = $props();

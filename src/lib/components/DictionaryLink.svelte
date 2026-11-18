@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import type { DictEntry } from '$lib/dictionary/types';
-	import { dictionary } from '$lib/dictionary/dictionaryState.svelte';
+	import { dictionary } from '$lib/state/dictionaryState.svelte';
 
 	const { text, current }: { text: string; current: DictEntry | null } = $props();
 

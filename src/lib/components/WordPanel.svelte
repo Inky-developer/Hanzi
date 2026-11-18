@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { type DictEntry } from '$lib/dictionary/types';
-	import Hanzi from '$lib/dictionary/Hanzi.svelte';
+	import Hanzi from '$lib/components/Hanzi.svelte';
 	import DictionarySection from '$lib/components/DictionarySection.svelte';
 	import ClickableHanziText from '$lib/components/ClickableHanziText.svelte';
 	import SeparatedList from '$lib/components/SeparatedList.svelte';

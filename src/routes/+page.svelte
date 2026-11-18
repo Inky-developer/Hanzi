@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Search from '$lib/dictionary/Search.svelte';
+	import Search from '$lib/components/Search.svelte';
 </script>
 
 <svelte:head>
