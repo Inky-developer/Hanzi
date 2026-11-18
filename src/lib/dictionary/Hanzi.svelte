@@ -1,13 +1,16 @@
 <script lang="ts">
 	import { strokes } from '$lib/dictionary/strokesState.svelte';
 	import { dictionary } from '$lib/dictionary/dictionaryState.svelte';
-	import { fade } from 'svelte/transition';
+	import { fade, type FadeParams } from 'svelte/transition';
 
 	type Point = [number, number];
 
 	// The width of the medians, should be bigger than the strokes in the stroke data
 	const MEDIAN_STROKE_WIDTH = 128;
 	const DRAWING_SPEED_UNITS_PER_SECOND = 800;
+	const FADE_IN_DURATION_MS = 400;
+
+	const fadeParams: FadeParams = { duration: FADE_IN_DURATION_MS };
 
 	const { char }: { char: string } = $props();
 	const id = $props.id();
@@ -26,7 +29,7 @@
 	const animatedStrokes = $derived.by(() => {
 		if (strokeData === undefined) return undefined;
 
-		let delay = 0;
+		let delay = FADE_IN_DURATION_MS / 1000;
 		return strokeData.strokes.map((stroke, index) => {
 			const median = strokeData.medians[index];
 			const length = lineLength(median);
@@ -39,29 +42,44 @@
 </script>
 
 <div class="grid place-items-center *:[grid-area:1/1]">
-	{#if animatedStrokes !== undefined}
-		<button
-			type="button"
-			transition:fade
-			class="cursor-pointer rounded-lg"
-			aria-label="Play {char} again"
-			onclick={() => replayCount++}
-		>
-			{#key `${char}:${replayCount}`}
-				<!-- Adapted from https://github.com/skishore/makemeahanzi/-->
-				<svg
-					viewBox="0 0 1024 1024"
-					xmlns="http://www.w3.org/2000/svg"
-					class="size-24 rounded-lg bg-paper-700 text-paper-50 dark:bg-paper-400 dark:text-paper-900"
-				>
-					<title>{char}</title>
-					<g class="helper-lines" stroke-dasharray="1,1" stroke-width="1" transform="scale(4, 4)">
-						<line x1="0" y1="0" x2="256" y2="256"></line>
-						<line x1="256" y1="0" x2="0" y2="256"></line>
-						<line x1="128" y1="0" x2="128" y2="256"></line>
-						<line x1="0" y1="128" x2="256" y2="128"></line>
-					</g>
+	<button
+		type="button"
+		transition:fade
+		class="cursor-pointer rounded-lg"
+		aria-label="Play {char} again"
+		onclick={() => replayCount++}
+	>
+		{#key `${char}:${replayCount}`}
+			<!-- Adapted from https://github.com/skishore/makemeahanzi/-->
+			<svg
+				viewBox="0 0 1024 1024"
+				xmlns="http://www.w3.org/2000/svg"
+				class="size-24 rounded-lg bg-paper-700 text-paper-50 dark:bg-paper-400 dark:text-paper-900"
+			>
+				<title>{char}</title>
+				<g class="helper-lines" stroke-dasharray="1,1" stroke-width="1" transform="scale(4, 4)">
+					<line x1="0" y1="0" x2="256" y2="256"></line>
+					<line x1="256" y1="0" x2="0" y2="256"></line>
+					<line x1="128" y1="0" x2="128" y2="256"></line>
+					<line x1="0" y1="128" x2="256" y2="128"></line>
+				</g>
+				{#if !animatedStrokes}
+					<text
+						x="512"
+						y="450"
+						transition:fade={fadeParams}
+						lang="zh-HANS"
+						text-anchor="middle"
+						dominant-baseline="central"
+						font-family="serif"
+						font-size="850"
+						fill="currentColor"
+					>
+						{char}
+					</text>
+				{:else}
 					<g
+						transition:fade={fadeParams}
 						transform="scale(1, -1) translate(0, -900)"
 						style:--median-stroke-width="{MEDIAN_STROKE_WIDTH}px"
 					>
@@ -80,14 +98,10 @@
 							></path>
 						{/each}
 					</g>
-				</svg>
-			{/key}
-		</button>
-	{:else}
-		<h2 transition:fade class="font-serif text-8xl font-semibold text-paper-900 dark:text-paper-50">
-			{char}
-		</h2>
-	{/if}
+				{/if}
+			</svg>
+		{/key}
+	</button>
 </div>
 
 <style>
