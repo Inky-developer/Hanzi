@@ -83,8 +83,12 @@
 						transform="scale(1, -1) translate(0, -900)"
 						style:--median-stroke-width="{MEDIAN_STROKE_WIDTH}px"
 					>
+						<g class="glyph-outlines">
+							{#each animatedStrokes as stroke, index (index)}
+								<path d={stroke.stroke}></path>
+							{/each}
+						</g>
 						{#each animatedStrokes as stroke, index (index)}
-							<path class="glyph-outline" d={stroke.stroke}></path>
 							<clipPath id="{id}-clip-{index}">
 								<path d={stroke.stroke}></path>
 							</clipPath>
@@ -115,7 +119,7 @@
 		}
 	}
 
-	.glyph-outline {
+	.glyph-outlines {
 		fill: currentColor;
 		opacity: 0.25;
 	}
