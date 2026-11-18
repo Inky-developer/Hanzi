@@ -7,18 +7,21 @@ export type Result = {
 };
 
 const splitData = (combined: StrokedDictEntry[]): Result => {
+	const entries: DictEntry[] = [];
 	const strokes: StrokeData[] = [];
 
 	combined.forEach((entry) => {
 		if (entry.type === 'hanzi' && entry.item.strokeData !== undefined) {
 			const strokesIndex = strokes.length;
-			strokes.push(entry.item.strokeData);
-			delete entry.item.strokeData;
-			entry.item.strokesIndex = strokesIndex;
+			const { strokeData, ...rest } = entry.item;
+			strokes.push(strokeData);
+			entries.push({ type: 'hanzi', item: { ...rest, strokesIndex } });
+		} else {
+			entries.push(entry);
 		}
 	});
 
-	return { entries: combined, strokes };
+	return { entries, strokes };
 };
 
 export const preprocess = async (dictPath: string): Promise<Result> => {

@@ -38,55 +38,57 @@
 	});
 </script>
 
-{#if animatedStrokes !== undefined}
-	<button
-		type="button"
-		transition:fade
-		class="cursor-pointer rounded-lg"
-		aria-label="Play {char} again"
-		onclick={() => replayCount++}
-	>
-		{#key `${char}:${replayCount}`}
-			<!-- Adapted from https://github.com/skishore/makemeahanzi/-->
-			<svg
-				viewBox="0 0 1024 1024"
-				xmlns="http://www.w3.org/2000/svg"
-				class="size-24 rounded-lg bg-paper-700 text-paper-50 dark:bg-paper-400 dark:text-paper-900"
-			>
-				<title>{char}</title>
-				<g class="helper-lines" stroke-dasharray="1,1" stroke-width="1" transform="scale(4, 4)">
-					<line x1="0" y1="0" x2="256" y2="256"></line>
-					<line x1="256" y1="0" x2="0" y2="256"></line>
-					<line x1="128" y1="0" x2="128" y2="256"></line>
-					<line x1="0" y1="128" x2="256" y2="128"></line>
-				</g>
-				<g
-					transform="scale(1, -1) translate(0, -900)"
-					style:--median-stroke-width="{MEDIAN_STROKE_WIDTH}px"
+<div class="grid place-items-center *:[grid-area:1/1]">
+	{#if animatedStrokes !== undefined}
+		<button
+			type="button"
+			transition:fade
+			class="cursor-pointer rounded-lg"
+			aria-label="Play {char} again"
+			onclick={() => replayCount++}
+		>
+			{#key `${char}:${replayCount}`}
+				<!-- Adapted from https://github.com/skishore/makemeahanzi/-->
+				<svg
+					viewBox="0 0 1024 1024"
+					xmlns="http://www.w3.org/2000/svg"
+					class="size-24 rounded-lg bg-paper-700 text-paper-50 dark:bg-paper-400 dark:text-paper-900"
 				>
-					{#each animatedStrokes as stroke, index (index)}
-						<path class="glyph-outline" d={stroke.stroke}></path>
-						<clipPath id="{id}-clip-{index}">
-							<path d={stroke.stroke}></path>
-						</clipPath>
-						<path
-							class="glyph-median"
-							d={stroke.median}
-							clip-path="url(#{id}-clip-{index})"
-							style:--length="{stroke.length}px"
-							style:animation-duration="{stroke.duration}s"
-							style:animation-delay="{stroke.delay}s"
-						></path>
-					{/each}
-				</g>
-			</svg>
-		{/key}
-	</button>
-{:else}
-	<h2 class="font-serif text-8xl font-semibold text-paper-900 dark:text-paper-50">
-		{char}
-	</h2>
-{/if}
+					<title>{char}</title>
+					<g class="helper-lines" stroke-dasharray="1,1" stroke-width="1" transform="scale(4, 4)">
+						<line x1="0" y1="0" x2="256" y2="256"></line>
+						<line x1="256" y1="0" x2="0" y2="256"></line>
+						<line x1="128" y1="0" x2="128" y2="256"></line>
+						<line x1="0" y1="128" x2="256" y2="128"></line>
+					</g>
+					<g
+						transform="scale(1, -1) translate(0, -900)"
+						style:--median-stroke-width="{MEDIAN_STROKE_WIDTH}px"
+					>
+						{#each animatedStrokes as stroke, index (index)}
+							<path class="glyph-outline" d={stroke.stroke}></path>
+							<clipPath id="{id}-clip-{index}">
+								<path d={stroke.stroke}></path>
+							</clipPath>
+							<path
+								class="glyph-median"
+								d={stroke.median}
+								clip-path="url(#{id}-clip-{index})"
+								style:--length="{stroke.length}px"
+								style:animation-duration="{stroke.duration}s"
+								style:animation-delay="{stroke.delay}s"
+							></path>
+						{/each}
+					</g>
+				</svg>
+			{/key}
+		</button>
+	{:else}
+		<h2 transition:fade class="font-serif text-8xl font-semibold text-paper-900 dark:text-paper-50">
+			{char}
+		</h2>
+	{/if}
+</div>
 
 <style>
 	.helper-lines {
