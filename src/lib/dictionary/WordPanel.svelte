@@ -37,7 +37,7 @@
 			<DictionarySection title="Traditional">
 				<SeparatedList items={entry.item.traditional}>
 					{#snippet item(traditional)}
-						<span class="row flex items-center gap-1">
+						<span class="inline-flex items-center gap-1">
 							{#each Array.from(traditional) as char, index (index)}
 								<DictionaryLink text={char} current={entry} />
 							{/each}
