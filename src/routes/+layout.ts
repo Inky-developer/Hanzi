@@ -1,7 +1,7 @@
 import type { LayoutLoad } from './$types';
 import { resolve } from '$app/paths';
 import { browser } from '$app/environment';
-import { loadDictionary, loadStrokes } from '$lib/dictionary/loadDictionary';
+import { loadDictionary } from '$lib/dictionary/loadDictionary';
 
 export const prerender = true;
 
