@@ -34,6 +34,26 @@ export default defineConfig(
 		}
 	},
 	{
+		files: ['scripts/**/*.ts'],
+		rules: {
+			'@typescript-eslint/no-restricted-imports': [
+				'error',
+				{
+					patterns: [
+						{
+							group: ['$lib', '$lib/**', '$app/**', '$env/**'],
+							allowTypeImports: true,
+							message:
+								'Scripts run directly in Node, so they may only import types from SvelteKit modules.'
+						}
+					]
+				}
+			],
+			// Node turns `import { type X } from 'x'` into `import {} from 'x'`, which still loads 'x'
+			'@typescript-eslint/no-import-type-side-effects': 'error'
+		}
+	},
+	{
 		// Override or add rule settings here, such as:
 		// 'svelte/button-has-type': 'error'
 		rules: {}

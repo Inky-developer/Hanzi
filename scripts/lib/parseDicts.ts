@@ -1,5 +1,6 @@
 import type { Common, DictEntry, Hanzi, StrokeData, Word } from '../../src/lib/dictionary/types.ts';
 import readLines from './readLines.ts';
+import { type NonEmpty, nonEmpty } from '../../src/lib/utils/types.ts';
 
 type StrokedHanzi = Hanzi & { strokeData?: StrokeData };
 
@@ -143,9 +144,9 @@ const isTraditionalOnly = (entry: Entry): boolean =>
 	entry.simpVariants !== undefined && !entry.simpVariants.includes(entry.char);
 
 const MAX_HSK_LEVEL = 9;
-const mapHSK = (level: number | undefined): number | null => {
+const mapHSK = (level: number | undefined): number | undefined => {
 	if (level === undefined || level > MAX_HSK_LEVEL) {
-		return null;
+		return undefined;
 	}
 	return level;
 };
@@ -207,8 +208,8 @@ const parseChar = (entry: Entry): StrokedHanzi | null => {
 		return null;
 	}
 
-	const frequency = entry.statistics?.bookCharCountPercent ?? null;
-	if (frequency === null) {
+	const frequency = entry.statistics?.bookCharCountPercent;
+	if (frequency === undefined) {
 		return null;
 	}
 
@@ -231,15 +232,13 @@ const parseChar = (entry: Entry): StrokedHanzi | null => {
 	const variantOf = [
 		...new Set([...definitions.variantOf, ...(entry.variantOf ? [entry.variantOf] : [])])
 	];
+	// Chars have no traditional / simplified information, that will be populated by `expandHanziWithWord`
 	return {
 		text: entry.char,
-		// Chars have no traditional / simplified information, that will be populated by `expandHanziWithWord`
-		traditional: [],
 		frequency,
-		pinyins: pinyins.map((it) => it.text),
-		english: definitions.english,
-		variantOf,
-		countingWords: [],
+		pinyins: nonEmpty(pinyins.map((it) => it.text)),
+		english: nonEmpty(definitions.english),
+		variantOf: nonEmpty(variantOf),
 		characterHint: entry?.hint ?? '',
 		hskLevel: mapHSK(entry?.statistics?.hskLevel),
 		strokeData
@@ -274,30 +273,40 @@ const parseWord = (entry: WordEntry): Word | null => {
 
 	return {
 		text: entry.simp,
-		traditional: entry.trad === entry.simp ? [] : [entry.trad],
-		pinyins: [...pinyins],
-		english: definitions.english,
-		variantOf: definitions.variantOf,
-		countingWords: definitions.countingWords,
+		traditional: entry.trad === entry.simp ? undefined : [entry.trad],
+		pinyins: nonEmpty([...pinyins]),
+		english: nonEmpty(definitions.english),
+		variantOf: nonEmpty(definitions.variantOf),
+		countingWords: nonEmpty(definitions.countingWords),
 		frequency,
 		hskLevel: mapHSK(entry.statistics?.hskLevel)
 	};
 };
 
-const minIgnoringNull = (a: number | null, b: number | null): number | null =>
-	a == null ? b : b == null ? a : Math.min(a, b);
+const minIgnoringUndefined = (a: number | undefined, b: number | undefined): number | undefined =>
+	a == undefined ? b : b == undefined ? a : Math.min(a, b);
+
+const merge = <T>(
+	lhs: NonEmpty<T> | undefined,
+	rhs: NonEmpty<T> | undefined
+): NonEmpty<T> | undefined =>
+	lhs === undefined
+		? rhs
+		: rhs === undefined
+			? undefined
+			: nonEmpty([...new Set([...lhs, ...rhs])]);
 
 // Sometimes words are duplicated and only differ in the traditional text.
 // Their frequency statistics are the same, so the frequencies shouldn't be added.
 const mergeWords = (lhs: Word, rhs: Word): Word => ({
 	text: lhs.text,
-	traditional: [...new Set([...lhs.traditional, ...rhs.traditional])],
-	pinyins: [...new Set([...lhs.pinyins, ...rhs.pinyins])],
-	english: [...new Set([...lhs.english, ...rhs.english])],
-	variantOf: [...new Set([...lhs.variantOf, ...rhs.variantOf])],
-	countingWords: [...new Set([...lhs.countingWords, ...rhs.countingWords])],
+	traditional: merge(lhs.traditional, rhs.traditional),
+	pinyins: merge(lhs.pinyins, rhs.pinyins),
+	english: merge(lhs.english, rhs.english),
+	variantOf: merge(lhs.variantOf, rhs.variantOf),
+	countingWords: merge(lhs.countingWords, rhs.countingWords),
 	frequency: Math.max(lhs.frequency, rhs.frequency),
-	hskLevel: minIgnoringNull(lhs.hskLevel, rhs.hskLevel)
+	hskLevel: minIgnoringUndefined(lhs.hskLevel, rhs.hskLevel)
 });
 
 /**
@@ -306,16 +315,18 @@ const mergeWords = (lhs: Word, rhs: Word): Word => ({
 const expandHanziWithWord = (hanzi: StrokedHanzi, word: Word): StrokedHanzi => {
 	return {
 		...hanzi,
-		traditional: word.traditional ?? hanzi.traditional,
-		english: [...new Set([...word.english, ...hanzi.english])],
-		variantOf: [...new Set([...word.variantOf, ...hanzi.variantOf])],
-		countingWords: [...new Set([...word.countingWords, ...hanzi.countingWords])]
+		traditional: merge(word.traditional, hanzi.traditional),
+		english: merge(word.english, hanzi.english),
+		variantOf: merge(word.variantOf, hanzi.variantOf),
+		countingWords: merge(word.countingWords, hanzi.countingWords)
 	};
 };
 
 const removeSelfVariants = <T extends Common>(entry: T): T => ({
 	...entry,
-	variantOf: entry.variantOf.filter((it) => it !== entry.text && !entry.traditional.includes(it))
+	variantOf: nonEmpty(
+		entry.variantOf?.filter((it) => it !== entry.text && !entry.traditional?.includes(it)) ?? []
+	)
 });
 
 export default async (dictionaryPath: string): Promise<StrokedDictEntry[]> => {

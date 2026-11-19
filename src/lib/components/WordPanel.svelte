@@ -33,7 +33,7 @@
 			</span>
 		</DictionarySection>
 
-		{#if entry.item.traditional.length > 0}
+		{#if entry.item.traditional}
 			<DictionarySection title="Traditional">
 				<SeparatedList items={entry.item.traditional}>
 					{#snippet item(traditional)}
@@ -47,7 +47,7 @@
 			</DictionarySection>
 		{/if}
 
-		{#if entry.item.pinyins.length > 0}
+		{#if entry.item.pinyins}
 			<DictionarySection title="Pinyin">
 				<SeparatedList items={entry.item.pinyins}>
 					{#snippet item(pinyin)}
@@ -57,7 +57,7 @@
 			</DictionarySection>
 		{/if}
 
-		{#if entry.item.variantOf.length > 0}
+		{#if entry.item.variantOf}
 			<DictionarySection title="Variant of">
 				<SeparatedList items={entry.item.variantOf}>
 					{#snippet item(variant)}
@@ -67,7 +67,7 @@
 			</DictionarySection>
 		{/if}
 
-		{#if entry.item.countingWords.length > 0}
+		{#if entry.item.countingWords}
 			{@const title = entry.item.countingWords.length === 1 ? 'Counting word' : 'Counting words'}
 			<DictionarySection {title}>
 				<SeparatedList items={entry.item.countingWords}>
@@ -78,7 +78,7 @@
 			</DictionarySection>
 		{/if}
 
-		{#if entry.item.english.length > 0}
+		{#if entry.item.english}
 			<DictionarySection title="Meanings">
 				<SeparatedList items={entry.item.english} lang="en" class="font-serif italic">
 					{#snippet item(english)}

@@ -1,3 +1,5 @@
+import type { NonEmpty } from '$lib/utils/types';
+
 export type DictEntry =
 	| {
 			type: 'word';
@@ -15,17 +17,17 @@ export type Common = {
 	text: string;
 	// Simplified variants always take precedence in this app.
 	// `traditional` only contains traditional variants that are different to the simplified text.
-	traditional: string[];
-	pinyins: string[];
-	english: string[];
-	variantOf: string[];
-	countingWords: string[];
+	traditional?: NonEmpty<string>;
+	pinyins?: NonEmpty<string>;
+	english?: NonEmpty<string>;
+	variantOf?: NonEmpty<string>;
+	countingWords?: NonEmpty<string>;
 	/**
 	 * Share of all characters (for hanzi) or all words (for words) in the book corpus.
 	 * Raw counts are not used, since the word corpus is much larger than the character corpus.
 	 */
 	frequency: number;
-	hskLevel: number | null;
+	hskLevel?: number;
 };
 
 export type Word = Common;

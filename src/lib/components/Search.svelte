@@ -36,7 +36,7 @@
 			description: 'Enter a word in pinyin, for example `gong`',
 			short: 'P',
 			search: (it) => dictionary().searchPinyin(it),
-			project: (it) => it.item.pinyins,
+			project: (it) => it.item.pinyins ?? [],
 			normalize: normalizePinyinSearch
 		},
 		hanzi: {
@@ -52,7 +52,7 @@
 			description: 'Enter an English word, for example `work`',
 			short: 'E',
 			search: (it) => dictionary().searchEnglish(it),
-			project: (it) => it.item.english,
+			project: (it) => it.item.english ?? [],
 			normalize: normalizeEnglishSearch
 		}
 	};

@@ -27,7 +27,7 @@ export class Dictionary {
 			};
 			data.forEach((entry, i) => insertIfMissing(entry.item.text, i));
 			data.forEach((entry, i) =>
-				entry.item.traditional.forEach((trad) => insertIfMissing(trad, i))
+				entry.item.traditional?.forEach((trad) => insertIfMissing(trad, i))
 			);
 			return index;
 		};
@@ -47,9 +47,9 @@ export class Dictionary {
 	};
 
 	private buildPinyinIndex = (): Index[] =>
-		this.buildIndex((entry) => entry.item.pinyins.map((it) => normalizePinyinSearch(it)));
+		this.buildIndex((entry) => entry.item.pinyins?.map((it) => normalizePinyinSearch(it)) ?? []);
 	private buildEnglishIndex = (): Index[] =>
-		this.buildIndex((entry) => entry.item.english.map((it) => normalizeEnglishSearch(it)));
+		this.buildIndex((entry) => entry.item.english?.map((it) => normalizeEnglishSearch(it)) ?? []);
 
 	private getPinyinIndex = (): Index[] => (this.pinyinIndex ??= this.buildPinyinIndex());
 	private getEnglishIndex = (): Index[] => (this.englishIndex ??= this.buildEnglishIndex());

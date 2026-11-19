@@ -25,7 +25,13 @@ const config: Config = {
 			fallback: '404.html',
 			precompress: true,
 			strict: true
-		})
+		}),
+		typescript: {
+			config: (config) => {
+				// Paths are relative to the generated .svelte-kit/tsconfig.json
+				config.include.push('../scripts/**/*.ts');
+			}
+		}
 	}
 };
 
