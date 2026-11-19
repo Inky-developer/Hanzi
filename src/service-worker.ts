@@ -24,7 +24,8 @@ const FALLBACK = `${base}/404.html`;
 const ASSETS = [
 	...build, // the app itself
 	...files, // everything in `static`
-	...prerendered, // Every prerendered page
+	// Every prerendered page, except the per-character stroke endpoints which are too many to precache
+	...prerendered.filter((path) => !path.startsWith(`${base}/api/stroke/`)),
 	FALLBACK // The fallback for non-prerendered pages
 ];
 

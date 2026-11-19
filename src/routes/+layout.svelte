@@ -4,8 +4,6 @@
 	import { SearchState, setSearchState } from '$lib/state/searchState.svelte';
 	import type { LayoutProps } from './$types.js';
 	import { setDictionary } from '$lib/state/dictionaryState.svelte';
-	import { setStrokes } from '$lib/state/strokesState.svelte';
-	import { loadStrokes } from '$lib/dictionary/loadDictionary';
 
 	let { children, data }: LayoutProps = $props();
 
@@ -17,7 +15,6 @@
 				it.buildCaches();
 			});
 		});
-		loadStrokes(fetch).then(setStrokes);
 	});
 </script>
 

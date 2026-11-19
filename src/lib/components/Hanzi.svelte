@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { strokes } from '$lib/state/strokesState.svelte';
-	import { dictionary } from '$lib/state/dictionaryState.svelte';
 	import { fade, type FadeParams } from 'svelte/transition';
+	import { resolve } from '$app/paths';
+	import type { StrokeData } from '$lib/dictionary/types';
 
 	type Point = [number, number];
 
@@ -15,7 +15,12 @@
 	const { char }: { char: string } = $props();
 	const id = $props.id();
 
-	const strokeData = $derived(strokes().lookup(dictionary(), char));
+	let strokeData: StrokeData | undefined = $state(undefined);
+	$effect(() => {
+		fetch(resolve('/api/stroke/[hanzi].json', { hanzi: char }))
+			.then((res) => res.json())
+			.then((data) => (strokeData = data));
+	});
 	let replayCount = $state(0);
 
 	const distance = ([x1, y1]: Point, [x2, y2]: Point): number => Math.hypot(x2 - x1, y2 - y1);
@@ -27,11 +32,12 @@
 		`M ${points.map(([x, y]) => `${x} ${y}`).join(' L ')}`;
 
 	const animatedStrokes = $derived.by(() => {
-		if (strokeData === undefined) return undefined;
+		const strokes = strokeData;
+		if (strokes === undefined) return undefined;
 
 		let delay = FADE_IN_DURATION_MS / 1000;
-		return strokeData.strokes.map((stroke, index) => {
-			const median = strokeData.medians[index];
+		return strokes.strokes.map((stroke, index) => {
+			const median = strokes.medians[index];
 			const length = lineLength(median);
 			const duration = (length + MEDIAN_STROKE_WIDTH) / DRAWING_SPEED_UNITS_PER_SECOND;
 			const animationInfo = { stroke, median: polylinePath(median), length, duration, delay };
