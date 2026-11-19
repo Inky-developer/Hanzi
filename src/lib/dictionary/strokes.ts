@@ -1,14 +1,15 @@
-import type { StrokeData } from '$lib/dictionary/types';
-import type { Dictionary } from '$lib/dictionary/dictionary';
+import type { KeyedStrokeData, StrokeData } from '$lib/dictionary/types';
 
 export class Strokes {
-	constructor(private readonly strokes: StrokeData[]) {}
+	constructor(private readonly strokes: Map<string, StrokeData>) {}
 
-	lookup(dictionary: Dictionary, word: string): StrokeData | undefined {
-		const index = dictionary.lookupHanzi(word)?.strokesIndex;
-		if (index === undefined) {
-			return undefined;
-		}
-		return this.strokes[index];
+	static fromStrokes(data: KeyedStrokeData[]) {
+		const map = new Map<string, StrokeData>();
+		data.forEach(({ char, ...stroke }) => map.set(char, stroke));
+		return new Strokes(map);
+	}
+
+	lookup(word: string): StrokeData | undefined {
+		return this.strokes.get(word);
 	}
 }

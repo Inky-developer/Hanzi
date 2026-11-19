@@ -23,7 +23,8 @@ const FALLBACK = `${base}/404.html`;
 
 const ASSETS = [
 	...build, // the app itself
-	...files, // everything in `static`
+	// everything in `static`, except the stroke data which is only needed at build time
+	...files.filter((path) => path !== `${base}/generated/strokes.json`),
 	// Every prerendered page, except the per-character stroke endpoints which are too many to precache
 	...prerendered.filter((path) => !path.startsWith(`${base}/api/stroke/`)),
 	FALLBACK // The fallback for non-prerendered pages

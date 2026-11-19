@@ -40,7 +40,8 @@ export type StrokeData = {
 	medians: [number, number][][];
 };
 
+export type KeyedStrokeData = StrokeData & { char: string };
+
 export type Hanzi = Common & {
 	characterHint: string;
-	strokesIndex?: number;
 };

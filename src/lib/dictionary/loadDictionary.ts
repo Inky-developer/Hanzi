@@ -1,6 +1,7 @@
 import { Dictionary } from '$lib/dictionary/dictionary';
 import { asset } from '$app/paths';
 import { Strokes } from '$lib/dictionary/strokes';
+import type { KeyedStrokeData } from '$lib/dictionary/types';
 
 let cachedDictionary: Promise<Dictionary> | undefined;
 let cachedStrokes: Promise<Strokes> | undefined;
@@ -18,7 +19,7 @@ export const loadDictionary = (fetch: typeof globalThis.fetch): Promise<Dictiona
 export const loadStrokes = (fetch: typeof globalThis.fetch): Promise<Strokes> =>
 	(cachedStrokes ??= fetch(asset('/generated/strokes.json'))
 		.then((resp) => resp.json())
-		.then((data) => new Strokes(data))
+		.then((data: KeyedStrokeData[]) => Strokes.fromStrokes(data))
 		.catch((error) => {
 			cachedStrokes = undefined;
 			throw error;
