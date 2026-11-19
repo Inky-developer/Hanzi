@@ -8,8 +8,8 @@ export const GET: RequestHandler = async ({ fetch }) => {
 	const dictionary = await loadDictionary(fetch);
 	return json(
 		dictionary.entries
-			.filter((it) => it.type === 'hanzi' && it.item.hskLevel !== null)
-			.map((it) => it.item.text)
+			.filter((it) => it.type === 'hanzi' && it.hskLevel !== null)
+			.map((it) => it.text)
 			.slice(0, 1000)
 	);
 };

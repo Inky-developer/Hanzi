@@ -1,17 +1,9 @@
 import type { NonEmpty } from '$lib/utils/types';
 
-export type DictEntry =
-	| {
-			type: 'word';
-			item: Word;
-	  }
-	| {
-			type: 'hanzi';
-			item: Hanzi;
-	  };
+export type DictEntry = ({ type: 'word' } & Word) | ({ type: 'hanzi' } & Hanzi);
 
 export const dictEntryEq = (lhs: DictEntry, rhs: DictEntry): boolean =>
-	lhs.type === rhs.type && lhs.item.text === rhs.item.text;
+	lhs.type === rhs.type && lhs.text === rhs.text;
 
 export type Common = {
 	text: string;

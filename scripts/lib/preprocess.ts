@@ -11,10 +11,10 @@ const splitData = (combined: StrokedDictEntry[]): Result => {
 	const strokes: KeyedStrokeData[] = [];
 
 	combined.forEach((entry) => {
-		if (entry.type === 'hanzi' && entry.item.strokeData !== undefined) {
-			const { strokeData, ...rest } = entry.item;
-			strokes.push({ ...strokeData, char: entry.item.text });
-			entries.push({ type: 'hanzi', item: rest });
+		if (entry.type === 'hanzi' && entry.strokeData !== undefined) {
+			const { strokeData, ...rest } = entry;
+			strokes.push({ ...strokeData, char: entry.text });
+			entries.push(rest);
 		} else {
 			entries.push(entry);
 		}

@@ -9,7 +9,7 @@
 
 	const { entry }: { entry: DictEntry } = $props();
 
-	const hanzis = $derived(Array.from(entry.item.text));
+	const hanzis = $derived(Array.from(entry.text));
 </script>
 
 <article class="flex min-h-0 flex-col">
@@ -26,16 +26,16 @@
 	>
 		<DictionarySection title="Simplified">
 			<span class="flex flex-row items-center gap-1">
-				{#each Array.from(entry.item.text) as char, index (index)}
+				{#each Array.from(entry.text) as char, index (index)}
 					<DictionaryLink text={char} current={entry} />
 				{/each}
-				<Speaker text={entry.item.text} class="pl-2" />
+				<Speaker text={entry.text} class="pl-2" />
 			</span>
 		</DictionarySection>
 
-		{#if entry.item.traditional}
+		{#if entry.traditional}
 			<DictionarySection title="Traditional">
-				<SeparatedList items={entry.item.traditional}>
+				<SeparatedList items={entry.traditional}>
 					{#snippet item(traditional)}
 						<span class="inline-flex items-center gap-1">
 							{#each Array.from(traditional) as char, index (index)}
@@ -47,9 +47,9 @@
 			</DictionarySection>
 		{/if}
 
-		{#if entry.item.pinyins}
+		{#if entry.pinyins}
 			<DictionarySection title="Pinyin">
-				<SeparatedList items={entry.item.pinyins}>
+				<SeparatedList items={entry.pinyins}>
 					{#snippet item(pinyin)}
 						{pinyin}
 					{/snippet}
@@ -57,9 +57,9 @@
 			</DictionarySection>
 		{/if}
 
-		{#if entry.item.variantOf}
+		{#if entry.variantOf}
 			<DictionarySection title="Variant of">
-				<SeparatedList items={entry.item.variantOf}>
+				<SeparatedList items={entry.variantOf}>
 					{#snippet item(variant)}
 						<ClickableHanziText text={variant} current={entry} />
 					{/snippet}
@@ -67,10 +67,10 @@
 			</DictionarySection>
 		{/if}
 
-		{#if entry.item.countingWords}
-			{@const title = entry.item.countingWords.length === 1 ? 'Counting word' : 'Counting words'}
+		{#if entry.countingWords}
+			{@const title = entry.countingWords.length === 1 ? 'Counting word' : 'Counting words'}
 			<DictionarySection {title}>
-				<SeparatedList items={entry.item.countingWords}>
+				<SeparatedList items={entry.countingWords}>
 					{#snippet item(word)}
 						<ClickableHanziText text={word} current={entry} />
 					{/snippet}
@@ -78,9 +78,9 @@
 			</DictionarySection>
 		{/if}
 
-		{#if entry.item.english}
+		{#if entry.english}
 			<DictionarySection title="Meanings">
-				<SeparatedList items={entry.item.english} lang="en" class="font-serif italic">
+				<SeparatedList items={entry.english} lang="en" class="font-serif italic">
 					{#snippet item(english)}
 						<ClickableHanziText text={english} current={entry} />
 					{/snippet}
@@ -88,15 +88,15 @@
 			</DictionarySection>
 		{/if}
 
-		{#if entry.type === 'hanzi' && entry.item.characterHint.length > 0}
+		{#if entry.type === 'hanzi' && entry.characterHint.length > 0}
 			<DictionarySection title="Glossary">
-				<ClickableHanziText text={entry.item.characterHint} current={entry} />
+				<ClickableHanziText text={entry.characterHint} current={entry} />
 			</DictionarySection>
 		{/if}
 
-		{#if entry.item.hskLevel !== null}
+		{#if entry.hskLevel !== null}
 			<DictionarySection title="HSK level">
-				{entry.item.hskLevel}
+				{entry.hskLevel}
 			</DictionarySection>
 		{/if}
 	</div>

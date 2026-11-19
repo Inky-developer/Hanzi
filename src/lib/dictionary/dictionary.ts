@@ -25,10 +25,8 @@ export class Dictionary {
 			const insertIfMissing = (key: string, i: number) => {
 				if (!index.has(key)) index.set(key, i);
 			};
-			data.forEach((entry, i) => insertIfMissing(entry.item.text, i));
-			data.forEach((entry, i) =>
-				entry.item.traditional?.forEach((trad) => insertIfMissing(trad, i))
-			);
+			data.forEach((entry, i) => insertIfMissing(entry.text, i));
+			data.forEach((entry, i) => entry.traditional?.forEach((trad) => insertIfMissing(trad, i)));
 			return index;
 		};
 
@@ -47,9 +45,9 @@ export class Dictionary {
 	};
 
 	private buildPinyinIndex = (): Index[] =>
-		this.buildIndex((entry) => entry.item.pinyins?.map((it) => normalizePinyinSearch(it)) ?? []);
+		this.buildIndex((entry) => entry.pinyins?.map((it) => normalizePinyinSearch(it)) ?? []);
 	private buildEnglishIndex = (): Index[] =>
-		this.buildIndex((entry) => entry.item.english?.map((it) => normalizeEnglishSearch(it)) ?? []);
+		this.buildIndex((entry) => entry.english?.map((it) => normalizeEnglishSearch(it)) ?? []);
 
 	private getPinyinIndex = (): Index[] => (this.pinyinIndex ??= this.buildPinyinIndex());
 	private getEnglishIndex = (): Index[] => (this.englishIndex ??= this.buildEnglishIndex());
@@ -72,7 +70,7 @@ export class Dictionary {
 		if (entry?.type !== 'hanzi') {
 			return null;
 		}
-		return entry.item;
+		return entry;
 	}
 
 	private searchIndex(query: string, index: Index[]): DictEntry[] {
@@ -96,7 +94,7 @@ export class Dictionary {
 
 	searchHanzi(query: string): DictEntry[] {
 		const needle = query.trim();
-		return this.entries.filter((it) => textMatchLength(needle, it.item.text) == needle.length);
+		return this.entries.filter((it) => textMatchLength(needle, it.text) == needle.length);
 	}
 }
 

@@ -5,7 +5,7 @@ import { type NonEmpty, nonEmpty } from '../../src/lib/utils/types.ts';
 type StrokedHanzi = Hanzi & { strokeData?: StrokeData };
 
 export type StrokedDictEntry =
-	Exclude<DictEntry, { type: 'hanzi' }> | { type: 'hanzi'; item: StrokedHanzi };
+	Exclude<DictEntry, { type: 'hanzi' }> | ({ type: 'hanzi' } & StrokedHanzi);
 
 type Source = 'unicode' | 'academia-sinica' | 'makemeahanzi' | 'baxter-sagart' | 'dong-chinese';
 
@@ -371,14 +371,14 @@ export default async (dictionaryPath: string): Promise<StrokedDictEntry[]> => {
 	const entries = [
 		...combinedChars.map((it): StrokedDictEntry => ({
 			type: 'hanzi',
-			item: removeSelfVariants(it)
+			...removeSelfVariants(it)
 		})),
 		...words
 			.values()
 			.filter((it) => Array.from(it.text).length > 1)
-			.map((it): StrokedDictEntry => ({ type: 'word', item: removeSelfVariants(it) }))
+			.map((it): StrokedDictEntry => ({ type: 'word', ...removeSelfVariants(it) }))
 	];
-	entries.sort((a, b) => b.item.frequency - a.item.frequency);
+	entries.sort((a, b) => b.frequency - a.frequency);
 
 	console.log(`Finished in ${(performance.now() - startTime) / 1000} s`);
 	console.log(`${entries.length} entries`);

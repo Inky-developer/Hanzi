@@ -36,7 +36,7 @@
 			description: 'Enter a word in pinyin, for example `gong`',
 			short: 'P',
 			search: (it) => dictionary().searchPinyin(it),
-			project: (it) => it.item.pinyins ?? [],
+			project: (it) => it.pinyins ?? [],
 			normalize: normalizePinyinSearch
 		},
 		hanzi: {
@@ -44,7 +44,7 @@
 			description: 'Enter hanzi, for example `工`',
 			short: 'H',
 			search: (it) => dictionary().searchHanzi(it),
-			project: (it) => [it.item.text],
+			project: (it) => [it.text],
 			normalize: (it) => it.trim()
 		},
 		english: {
@@ -52,7 +52,7 @@
 			description: 'Enter an English word, for example `work`',
 			short: 'E',
 			search: (it) => dictionary().searchEnglish(it),
-			project: (it) => it.item.english ?? [],
+			project: (it) => it.english ?? [],
 			normalize: normalizeEnglishSearch
 		}
 	};
@@ -73,7 +73,7 @@
 	const onKeyDown = (event: KeyboardEvent) => {
 		if (event.key !== 'Enter' || shown.length === 0) return;
 		event.preventDefault();
-		goto(resolve('/dict/[word]', { word: shown[0].item.text }));
+		goto(resolve('/dict/[word]', { word: shown[0].text }));
 	};
 
 	const nextMode = (): SearchMode => {
@@ -127,17 +127,17 @@
 	{/if}
 
 	<ol class="scroll-thin min-h-0 flex-1 overflow-y-auto overscroll-contain p-1.5 max-md:max-h-64">
-		{#each shown as result (result.item.text)}
+		{#each shown as result (result.text)}
 			{@const active = isSelected(result)}
 			<li>
 				<a
-					href={resolve('/dict/[word]', { word: result.item.text })}
+					href={resolve('/dict/[word]', { word: result.text })}
 					aria-current={active ? 'true' : undefined}
 					class="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-paper-100 dark:hover:bg-paper-800/60
 						{active ? 'bg-ink-600/10 dark:bg-ink-600/25' : ''}"
 				>
 					<span class="min-w-0 shrink-0">
-						{result.item.text}
+						{result.text}
 					</span>
 					<span class="ml-auto min-w-0 truncate rounded px-1.5 py-0.5 text-[0.65rem] font-medium">
 						{#each PROMPTS[mode].project(result) as prop (prop)}
