@@ -15,7 +15,7 @@
 <article class="flex min-h-0 flex-col">
 	<header class="border-b border-paper-100 px-6 py-4 dark:border-paper-800">
 		<div class="flex flex-wrap items-baseline justify-center gap-x-3 gap-y-1">
-			{#each hanzis as hanzi, index (index)}
+			{#each hanzis as hanzi, index (`${entry.text}\0${index}`)}
 				<Hanzi char={hanzi} />
 			{/each}
 		</div>

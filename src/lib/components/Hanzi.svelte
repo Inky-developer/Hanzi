@@ -50,7 +50,6 @@
 <div class="grid place-items-center *:[grid-area:1/1]">
 	<button
 		type="button"
-		transition:fade
 		class="cursor-pointer rounded-lg"
 		aria-label="Play {char} again"
 		onclick={() => replayCount++}
