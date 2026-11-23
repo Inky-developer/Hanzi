@@ -5,6 +5,9 @@ export type DictEntry = ({ type: 'word' } & Word) | ({ type: 'hanzi' } & Hanzi);
 export const dictEntryEq = (lhs: DictEntry, rhs: DictEntry): boolean =>
 	lhs.type === rhs.type && lhs.text === rhs.text;
 
+export const dictEntrySortFrequency = (entry: DictEntry) =>
+	entry.type === 'hanzi' ? entry.charFrequency : entry.wordFrequency;
+
 export type Common = {
 	text: string;
 	// Simplified variants always take precedence in this app.
@@ -18,7 +21,7 @@ export type Common = {
 	 * Share of all characters (for hanzi) or all words (for words) in the book corpus.
 	 * Raw counts are not used, since the word corpus is much larger than the character corpus.
 	 */
-	frequency: number;
+	wordFrequency: number;
 	hskLevel?: number;
 };
 
@@ -37,5 +40,6 @@ export type StrokeData = {
 export type KeyedStrokeData = StrokeData & { char: string };
 
 export type Hanzi = Common & {
+	charFrequency: number;
 	characterHint: string;
 };

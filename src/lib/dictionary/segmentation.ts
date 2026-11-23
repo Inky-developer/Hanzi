@@ -24,9 +24,8 @@ export const buildSegmentationGraph = (dictionary: Dictionary, text: string): Se
 		candidates.delete(index);
 		candidates.forEach((candidate) => {
 			const text = nodes.slice(index, candidate).join('');
-			// TODO: chars use charFrequency and words use wordFrequencies. We only care about wordFrequencies
 			// The fallback is arbitrary. Any small value that works inside a log should be fine.
-			const cost = Math.log(dictionary.lookup(text)?.frequency ?? 1e-15);
+			const cost = Math.log(dictionary.lookup(text)?.wordFrequency ?? 1e-15);
 			edges[index].push({ successorIndex: candidate, cost: cost });
 		});
 	});

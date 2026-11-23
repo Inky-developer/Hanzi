@@ -1,4 +1,11 @@
-import type { Common, DictEntry, Hanzi, StrokeData, Word } from '../../src/lib/dictionary/types.ts';
+import {
+	type Common,
+	type DictEntry,
+	dictEntrySortFrequency,
+	type Hanzi,
+	type StrokeData,
+	type Word
+} from '../../src/lib/dictionary/types.ts';
 import readLines from './readLines.ts';
 import { type NonEmpty, nonEmpty } from '../../src/lib/utils/types.ts';
 
@@ -208,10 +215,12 @@ const parseChar = (entry: Entry): StrokedHanzi | null => {
 		return null;
 	}
 
-	const frequency = entry.statistics?.bookCharCountPercent;
-	if (frequency === undefined) {
+	const charFrequency = entry.statistics?.bookCharCountPercent;
+	if (charFrequency === undefined) {
 		return null;
 	}
+
+	const wordFrequency = entry.statistics?.bookWordCountPercent ?? charFrequency;
 
 	const pinyins =
 		entry?.pinyinFrequencies?.map((it) => ({
@@ -235,7 +244,8 @@ const parseChar = (entry: Entry): StrokedHanzi | null => {
 	// Chars have no traditional / simplified information, that will be populated by `expandHanziWithWord`
 	return {
 		text: entry.char,
-		frequency,
+		wordFrequency,
+		charFrequency,
 		pinyins: nonEmpty(pinyins.map((it) => it.text)),
 		english: nonEmpty(definitions.english),
 		variantOf: nonEmpty(variantOf),
@@ -252,8 +262,8 @@ const combineDefinitions = (definitions: Definitions[]): Definitions => ({
 });
 
 const parseWord = (entry: WordEntry): Word | null => {
-	const frequency = entry.statistics?.bookWordCountPercent ?? null;
-	if (frequency === null) {
+	const wordFrequency = entry.statistics?.bookWordCountPercent ?? null;
+	if (wordFrequency === null) {
 		return null;
 	}
 
@@ -278,7 +288,7 @@ const parseWord = (entry: WordEntry): Word | null => {
 		english: nonEmpty(definitions.english),
 		variantOf: nonEmpty(definitions.variantOf),
 		countingWords: nonEmpty(definitions.countingWords),
-		frequency,
+		wordFrequency,
 		hskLevel: mapHSK(entry.statistics?.hskLevel)
 	};
 };
@@ -305,7 +315,7 @@ const mergeWords = (lhs: Word, rhs: Word): Word => ({
 	english: merge(lhs.english, rhs.english),
 	variantOf: merge(lhs.variantOf, rhs.variantOf),
 	countingWords: merge(lhs.countingWords, rhs.countingWords),
-	frequency: Math.max(lhs.frequency, rhs.frequency),
+	wordFrequency: Math.max(lhs.wordFrequency, rhs.wordFrequency),
 	hskLevel: minIgnoringUndefined(lhs.hskLevel, rhs.hskLevel)
 });
 
@@ -318,7 +328,8 @@ const expandHanziWithWord = (hanzi: StrokedHanzi, word: Word): StrokedHanzi => {
 		traditional: merge(word.traditional, hanzi.traditional),
 		english: merge(word.english, hanzi.english),
 		variantOf: merge(word.variantOf, hanzi.variantOf),
-		countingWords: merge(word.countingWords, hanzi.countingWords)
+		countingWords: merge(word.countingWords, hanzi.countingWords),
+		wordFrequency: Math.max(hanzi.wordFrequency, word.wordFrequency)
 	};
 };
 
@@ -378,7 +389,7 @@ export default async (dictionaryPath: string): Promise<StrokedDictEntry[]> => {
 			.filter((it) => Array.from(it.text).length > 1)
 			.map((it): StrokedDictEntry => ({ type: 'word', ...removeSelfVariants(it) }))
 	];
-	entries.sort((a, b) => b.frequency - a.frequency);
+	entries.sort((a, b) => dictEntrySortFrequency(b) - dictEntrySortFrequency(a));
 
 	console.log(`Finished in ${(performance.now() - startTime) / 1000} s`);
 	console.log(`${entries.length} entries`);
