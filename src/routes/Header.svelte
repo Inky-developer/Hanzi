@@ -20,6 +20,7 @@
 
 	const links = [
 		{ href: resolve('/'), label: 'Wörterbuch' },
+		{ href: resolve('/segmentation'), label: 'Editor' },
 		{ href: resolve('/about'), label: 'Über' }
 	];
 
