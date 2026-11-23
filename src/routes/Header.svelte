@@ -5,6 +5,7 @@
 	import Search from '$lib/components/Search.svelte';
 	import { Search as SearchIcon } from '@lucide/svelte';
 	import { afterNavigate } from '$app/navigation';
+	import type { RouteId } from '$app/types';
 
 	const { commonHanzi }: { commonHanzi: string[] } = $props();
 	const MILLISECONDS_PER_DAY = 86_400_000;
@@ -18,13 +19,14 @@
 		symbolOfTheDay = commonHanzi[localDayNumber(new Date()) % commonHanzi.length];
 	});
 
-	const dictionary = { href: resolve('/'), label: 'Dictionary' };
-	const segmentation = { href: resolve('/segmentation'), label: 'Reader' };
-	const about = { href: resolve('/about'), label: 'About' };
-	const links = [dictionary, segmentation, about];
+	const links = [
+		{ href: resolve('/'), label: 'Dictionary', prefix: '/dict' },
+		{ href: resolve('/segmentation'), label: 'Reader', prefix: '/segmentation' },
+		{ href: resolve('/about'), label: 'About', prefix: '/about' }
+	];
 
-	const activePage = (url: string) =>
-		url.startsWith('/segmentation') ? segmentation : url.startsWith('/about') ? about : dictionary;
+	const activePage = (route: RouteId) =>
+		links.find(({ prefix }) => route.startsWith(prefix)) ?? links[0];
 
 	let dialog: HTMLDialogElement;
 	afterNavigate(() => dialog.close());
@@ -52,7 +54,7 @@
 		<nav class="ml-auto flex items-center">
 			<ul class="flex items-center gap-1">
 				{#each links as link (link.href)}
-					{@const current = activePage(page.url.pathname) === link}
+					{@const current = page.route.id !== null && activePage(page.route.id) === link}
 					<li>
 						<a
 							href={link.href}
