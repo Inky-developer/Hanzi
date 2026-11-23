@@ -18,11 +18,13 @@
 		symbolOfTheDay = commonHanzi[localDayNumber(new Date()) % commonHanzi.length];
 	});
 
-	const links = [
-		{ href: resolve('/'), label: 'Wörterbuch' },
-		{ href: resolve('/segmentation'), label: 'Editor' },
-		{ href: resolve('/about'), label: 'Über' }
-	];
+	const dictionary = { href: resolve('/'), label: 'Dictionary' };
+	const segmentation = { href: resolve('/segmentation'), label: 'Reader' };
+	const about = { href: resolve('/about'), label: 'About' };
+	const links = [dictionary, segmentation, about];
+
+	const activePage = (url: string) =>
+		url.startsWith('/segmentation') ? segmentation : url.startsWith('/about') ? about : dictionary;
 
 	let dialog: HTMLDialogElement;
 	afterNavigate(() => dialog.close());
@@ -42,7 +44,7 @@
 					Hanzi
 				</span>
 				<span class="text-[0.7rem] tracking-wide text-paper-500 uppercase dark:text-paper-400">
-					Chinesisch
+					Chinese
 				</span>
 			</span>
 		</a>
@@ -50,7 +52,7 @@
 		<nav class="ml-auto flex items-center">
 			<ul class="flex items-center gap-1">
 				{#each links as link (link.href)}
-					{@const current = page.url.pathname === link.href}
+					{@const current = activePage(page.url.pathname) === link}
 					<li>
 						<a
 							href={link.href}

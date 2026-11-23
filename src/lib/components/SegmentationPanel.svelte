@@ -23,7 +23,7 @@
 	<button
 		onclick={() => goto(resolve('/segmentation/[text]', { text: encodeURIComponent(text) }))}
 		disabled={text.trim().length === 0}
-		class="rounded-ld cursor-pointer border border-paper-200 bg-paper-200/70 py-2 shadow-sm transition-colors hover:brightness-150
+		class="cursor-pointer rounded-lg border border-paper-200 bg-paper-200/70 py-2 shadow-sm transition-colors hover:brightness-150
 		disabled:cursor-not-allowed disabled:opacity-50 dark:border-paper-700 dark:bg-black/20"
 		>Analyze</button
 	>

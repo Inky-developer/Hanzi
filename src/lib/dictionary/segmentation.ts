@@ -7,7 +7,7 @@ type SegmentationGraph = {
 	edges: Edge[][];
 };
 
-export const buildSegmentationGraph = (dictionary: Dictionary, text: string): SegmentationGraph => {
+const buildSegmentationGraph = (dictionary: Dictionary, text: string): SegmentationGraph => {
 	const nodes = Array.from(text);
 	// End node, not included in the final output
 	nodes.push('\0');
