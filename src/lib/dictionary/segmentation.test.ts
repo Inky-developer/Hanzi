@@ -36,4 +36,23 @@ describe('segmentation', async () => {
 			]
 		`);
 	});
+
+	test('handles disallow single token', () => {
+		expect(segmentText(dictionary, '怎么样')).toMatchInlineSnapshot(`
+			[
+			  "怎么样",
+			]
+		`);
+		expect(segmentText(dictionary, '怎么样', { allowSingleToken: false })).toMatchInlineSnapshot(`
+			[
+			  "怎么",
+			  "样",
+			]
+		`);
+	});
+
+	test('handles short inputs', () => {
+		expect(segmentText(dictionary, '')).toEqual([]);
+		expect(segmentText(dictionary, 'a')).toEqual(['a']);
+	});
 });

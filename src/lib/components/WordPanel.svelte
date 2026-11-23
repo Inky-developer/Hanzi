@@ -26,9 +26,7 @@
 	>
 		<DictionarySection title="Simplified">
 			<span class="flex flex-row items-center gap-1">
-				{#each Array.from(entry.text) as char, index (index)}
-					<DictionaryLink text={char} current={entry} />
-				{/each}
+				<ClickableHanziText text={entry.text} current={entry} />
 				<Speaker text={entry.text} class="pl-2" />
 			</span>
 		</DictionarySection>
@@ -38,9 +36,7 @@
 				<SeparatedList items={entry.traditional}>
 					{#snippet item(traditional)}
 						<span class="inline-flex items-center gap-1">
-							{#each Array.from(traditional) as char, index (index)}
-								<DictionaryLink text={char} current={entry} />
-							{/each}
+							<ClickableHanziText text={traditional} current={entry} />
 						</span>
 					{/snippet}
 				</SeparatedList>

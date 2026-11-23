@@ -15,6 +15,7 @@ const buildSegmentationGraph = (dictionary: Dictionary, text: string): Segmentat
 
 	nodes.forEach((_, index) => {
 		// TODO: optimize
+		// TODO: Also include traditional characters
 		const candidates = new Set(
 			dictionary.entries.map((entry) => index + textMatchLength(entry.text, text.substring(index)))
 		);
@@ -87,8 +88,29 @@ const pathToSegments = (chars: string[], path: number[]): string[] => {
 	return result;
 };
 
-export const segmentText = (dictionary: Dictionary, text: string): string[] => {
+export type SegmentationOptions = {
+	/**
+	 * 	Whether a text may be segmented as a single token, default true.
+	 * 	Use case: force a dictionary entry to be segmented into its sub-words.
+	 */
+	allowSingleToken?: boolean;
+};
+export const segmentText = (
+	dictionary: Dictionary,
+	text: string,
+	options?: SegmentationOptions
+): string[] => {
+	const { allowSingleToken = true } = options ?? {};
+
 	const graph = buildSegmentationGraph(dictionary, text);
+
+	if (!allowSingleToken && graph.nodes.length > 2) {
+		// Removes the potential edge from the start to the end, forcing the text to be segmented into at least two segments
+		graph.edges[0] = graph.edges[0].filter(
+			(edge) => edge.successorIndex !== graph.nodes.length - 1
+		);
+	}
+
 	const costs = computeCosts(graph);
 	const path = findPath(costs);
 	return pathToSegments(graph.nodes, path);
