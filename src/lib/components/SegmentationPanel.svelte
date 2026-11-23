@@ -13,6 +13,21 @@
 </script>
 
 <article class="flex min-h-0 flex-col gap-3">
+	{#if segments.length > 0}
+		<div
+			class="my-4 rounded-md bg-paper-300 p-2 font-serif text-2xl leading-loose font-medium whitespace-pre-wrap dark:bg-paper-700"
+		>
+			{#each segments as segment, index (index)}
+				{#if segment.trim().length === 0}
+					{segment}
+				{:else}
+					<span class="mx-[0.3em] inline-block">
+						<DictionaryLink text={segment} current={null} showRuby />
+					</span>
+				{/if}
+			{/each}
+		</div>
+	{/if}
 	<textarea
 		bind:value={text}
 		rows="4"
@@ -27,14 +42,4 @@
 		disabled:cursor-not-allowed disabled:opacity-50 dark:border-paper-700 dark:bg-black/20"
 		>Analyze</button
 	>
-	{#if segments.length > 0}
-		<div
-			class="my-4 rounded-md bg-paper-300 p-2 font-serif leading-loose font-medium whitespace-pre-wrap dark:bg-paper-700"
-		>
-			{#each segments as segment, index (index)}{#if segment.trim().length === 0}{segment}{:else}<span
-						class="mx-[0.3em] inline-block"
-						><DictionaryLink text={segment} current={null} showRuby /></span
-					>{/if}{/each}
-		</div>
-	{/if}
 </article>

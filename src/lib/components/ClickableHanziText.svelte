@@ -14,7 +14,7 @@
 	{#if isHanzi}
 		{@const allowSingleToken = dictionary().lookup(component) !== current}
 		{@const segments = segmentText(dictionary(), component, { allowSingleToken })}
-		<span class="flex gap-2">
+		<span class="inline-flex gap-2">
 			{#each segments as segment, segmentIndex (segmentIndex)}
 				<DictionaryLink text={segment} {current} />
 			{/each}
