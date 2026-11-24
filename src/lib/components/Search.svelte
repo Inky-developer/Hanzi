@@ -88,6 +88,7 @@
 			<SearchIcon
 				class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-paper-400"
 			/>
+			<!-- svelte-ignore a11y_autofocus -->
 			<input
 				bind:value={search.query}
 				onkeydown={onKeyDown}
