@@ -4,7 +4,6 @@
 	import DictionarySection from '$lib/components/DictionarySection.svelte';
 	import ClickableHanziText from '$lib/components/ClickableHanziText.svelte';
 	import SeparatedList from '$lib/components/SeparatedList.svelte';
-	import DictionaryLink from '$lib/components/DictionaryLink.svelte';
 	import Speaker from '$lib/components/Speaker.svelte';
 
 	const { entry }: { entry: DictEntry } = $props();

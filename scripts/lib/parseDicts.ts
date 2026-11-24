@@ -215,12 +215,18 @@ const parseChar = (entry: Entry): StrokedHanzi | null => {
 		return null;
 	}
 
-	const charFrequency = entry.statistics?.bookCharCountPercent;
+	// FIXME (Also for parseWord): maybe try to estimate the bookCharCountPercent if we fallback to charCountPercent,
+	// by scaling it by the average factor?
+	const charFrequency =
+		entry.statistics?.bookCharCountPercent ?? entry.statistics?.movieCharCountPercent;
 	if (charFrequency === undefined) {
 		return null;
 	}
 
-	const wordFrequency = entry.statistics?.bookWordCountPercent ?? charFrequency;
+	const wordFrequency =
+		entry.statistics?.bookWordCountPercent ??
+		entry.statistics?.movieWordCountPercent ??
+		charFrequency;
 
 	const pinyins =
 		entry?.pinyinFrequencies?.map((it) => ({
@@ -262,8 +268,9 @@ const combineDefinitions = (definitions: Definitions[]): Definitions => ({
 });
 
 const parseWord = (entry: WordEntry): Word | null => {
-	const wordFrequency = entry.statistics?.bookWordCountPercent ?? null;
-	if (wordFrequency === null) {
+	const wordFrequency =
+		entry.statistics?.bookWordCountPercent ?? entry.statistics?.movieWordCountPercent;
+	if (wordFrequency === undefined) {
 		return null;
 	}
 
