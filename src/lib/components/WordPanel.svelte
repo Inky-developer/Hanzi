@@ -89,7 +89,7 @@
 			</DictionarySection>
 		{/if}
 
-		{#if entry.hskLevel !== null}
+		{#if entry.hskLevel !== undefined}
 			<DictionarySection title="HSK level">
 				{entry.hskLevel}
 			</DictionarySection>
