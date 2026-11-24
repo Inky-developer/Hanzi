@@ -6,11 +6,11 @@
 		EMPTY_DICTIONARY
 	} from '$lib/dictionary/dictionary';
 	import { type DictEntry, dictEntryEq } from '$lib/dictionary/types';
-	import { resolve } from '$app/paths';
 	import { getSearchState, SEARCH_MODES, type SearchMode } from '$lib/state/searchState.svelte';
 	import { goto } from '$app/navigation';
 	import { Search as SearchIcon } from '@lucide/svelte';
 	import { dictionary } from '$lib/state/dictionaryState.svelte';
+	import { getEntryURL } from '$lib/state/getEntryURLState.svelte';
 
 	const {
 		selected
@@ -73,7 +73,7 @@
 	const onKeyDown = (event: KeyboardEvent) => {
 		if (event.key !== 'Enter' || shown.length === 0) return;
 		event.preventDefault();
-		goto(resolve('/dict/[word]', { word: shown[0].text }));
+		goto(getEntryURL(shown[0].text));
 	};
 
 	const nextMode = (): SearchMode => {
@@ -132,7 +132,7 @@
 			{@const active = isSelected(result)}
 			<li>
 				<a
-					href={resolve('/dict/[word]', { word: result.text })}
+					href={getEntryURL(result.text)}
 					aria-current={active ? 'true' : undefined}
 					class="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-paper-100 dark:hover:bg-paper-800/60
 						{active ? 'bg-ink-600/10 dark:bg-ink-600/25' : ''}"

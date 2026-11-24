@@ -17,7 +17,7 @@
 
 	let strokeData: StrokeData | undefined = $state(undefined);
 	$effect(() => {
-		fetch(resolve('/api/stroke/[hanzi].json', { hanzi: char }))
+		fetch(resolve('/(api)/api/stroke/[hanzi].json', { hanzi: char }))
 			.then((res) => res.json())
 			.then((data) => (strokeData = data));
 	});

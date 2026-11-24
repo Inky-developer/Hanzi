@@ -1,21 +1,14 @@
 <script lang="ts">
 	import Header from './Header.svelte';
-	import './layout.css';
-	import { SearchState, setSearchState } from '$lib/state/searchState.svelte';
-	import type { LayoutProps } from './$types.js';
-	import { setDictionary } from '$lib/state/dictionaryState.svelte';
+	import '$lib/app.css';
+	import type { LayoutProps } from './$types';
+	import initializeAppState from '$lib/state/initializeAppState.svelte';
+	import { resolve } from '$app/paths';
 
 	let { children, data }: LayoutProps = $props();
 
-	setSearchState(new SearchState());
-	$effect(() => {
-		data.dictionary?.then((it) => {
-			setDictionary(it);
-			window.requestIdleCallback(() => {
-				it.buildCaches();
-			});
-		});
-	});
+	const getEntryURL = (word: string) => resolve('/(app)/dict/[word]', { word });
+	initializeAppState(() => data.dictionary, getEntryURL);
 </script>
 
 <div class="flex min-h-screen flex-col">
