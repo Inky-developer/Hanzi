@@ -174,16 +174,12 @@ const VARIANT_DEF = /^(?:old |archaic |erhua |Japanese |Taiwan )?variant of (.*)
 const CL_DEF = /^CL:(.+)$/i;
 type Definitions = { variantOf: string[]; countingWords: string[]; english: string[] };
 const parseDefinitions = (item: WordEntryItem): Definitions => {
-	let items = item.definitions ?? [];
-
 	// The Unicode source often contains a single definition containing multiple words
 	// So we use a conservative heuristic here to split these on a best effort basis.
 	// The regex must be so conservative, so that definitions like `to receive, as communications` don't get split
-	if (item.source === 'unicode') {
-		items = items.flatMap((def) =>
-			SIMPLE_ENUMERATION.test(def) ? def.trim().split(DEFINITION_COMMA_SPLIT) : [def]
-		);
-	}
+	const items = (item.definitions ?? []).flatMap((def) =>
+		SIMPLE_ENUMERATION.test(def) ? def.trim().split(DEFINITION_COMMA_SPLIT) : [def]
+	);
 
 	const variantOf: string[] = [];
 	const countingWords: string[] = [];
