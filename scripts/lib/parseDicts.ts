@@ -343,6 +343,16 @@ const removeSelfVariants = <T extends Common>(entry: T): T => ({
 	)
 });
 
+const cleanupEnglish = (english: NonEmpty<string>): NonEmpty<string> | undefined => {
+	const set = new Set(english);
+	// Removes duplicate verbs like ['walk', 'to walk']
+	const deduplicated = english
+		.values()
+		.filter((it) => !set.has(`to ${it}`))
+		.toArray();
+	return nonEmpty(deduplicated);
+};
+
 export default async (dictionaryPath: string): Promise<StrokedDictEntry[]> => {
 	const chars: StrokedHanzi[] = [];
 	const words: Map<string, Word> = new Map();
@@ -382,7 +392,7 @@ export default async (dictionaryPath: string): Promise<StrokedDictEntry[]> => {
 		return expandHanziWithWord(hanzi, hanziWord);
 	});
 
-	const entries = [
+	let entries = [
 		...combinedChars.map((it): StrokedDictEntry => ({
 			type: 'hanzi',
 			...removeSelfVariants(it)
@@ -392,6 +402,10 @@ export default async (dictionaryPath: string): Promise<StrokedDictEntry[]> => {
 			.filter((it) => Array.from(it.text).length > 1)
 			.map((it): StrokedDictEntry => ({ type: 'word', ...removeSelfVariants(it) }))
 	];
+	entries = entries.map((entry) => ({
+		...entry,
+		english: entry.english ? cleanupEnglish(entry.english) : undefined
+	}));
 	entries.sort((a, b) => dictEntrySortFrequency(b) - dictEntrySortFrequency(a));
 
 	console.log(`Finished in ${(performance.now() - startTime) / 1000} s`);
