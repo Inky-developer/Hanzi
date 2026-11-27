@@ -101,7 +101,7 @@ export class Dictionary {
 export const EMPTY_DICTIONARY = Dictionary.fromStorage([]);
 
 export const normalizePinyinSearch = (pinyin: string): string =>
-	removeToneMarks(pinyin.trim()).toLowerCase();
+	removeToneMarks(pinyin.replaceAll(/\s/g, '')).toLowerCase();
 
 export const normalizeEnglishSearch = (search: string): string => search.trim().toLowerCase();
 

@@ -80,6 +80,32 @@
 		const currentIndex = SEARCH_MODES.indexOf(mode) ?? 0;
 		return SEARCH_MODES[(currentIndex + 1) % SEARCH_MODES.length];
 	};
+
+	const getOriginalMatchLength = (
+		mode: (typeof PROMPTS)[SearchMode],
+		match: string,
+		normalizedMatchLength: number
+	): number => {
+		if (normalizedMatchLength === 0) return 0;
+
+		for (let i = 1; i < match.length; i++) {
+			if (mode.normalize(match.slice(0, i)).length >= normalizedMatchLength) {
+				return i;
+			}
+		}
+		return match.length;
+	};
+
+	const getMatchLength = (
+		mode: (typeof PROMPTS)[SearchMode],
+		needle: string,
+		match: string
+	): number =>
+		getOriginalMatchLength(
+			mode,
+			match,
+			textMatchLength(mode.normalize(needle), mode.normalize(match))
+		);
 </script>
 
 <div class="flex min-h-0 flex-col">
@@ -142,10 +168,7 @@
 					</span>
 					<span class="ml-auto min-w-0 truncate rounded px-1.5 py-0.5 text-[0.65rem] font-medium">
 						{#each PROMPTS[mode].project(result) as prop (prop)}
-							{@const matchLength = textMatchLength(
-								PROMPTS[mode].normalize(query),
-								PROMPTS[mode].normalize(prop)
-							)}
+							{@const matchLength = getMatchLength(PROMPTS[mode], query, prop)}
 							{#if matchLength > 0}
 								<span class="not-first:ml-2">
 									<span class="text-paper-400 dark:text-paper-500"
