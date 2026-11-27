@@ -263,13 +263,25 @@ const combineDefinitions = (definitions: Definitions[]): Definitions => ({
 	english: [...new Set(definitions.flatMap((it) => it.english))]
 });
 
-const parseWord = (entry: WordEntry): Word | null => {
-	const wordFrequency =
-		entry.statistics?.bookWordCountPercent ?? entry.statistics?.movieWordCountPercent;
-	if (wordFrequency === undefined) {
-		return null;
-	}
+const FREQUENCY_FALLBACK_HSK_LEVEL = 1;
+/** Words that are not part of the frequency corpora, but are common enough to be kept with an estimated frequency. */
+const isFrequencyFallbackCandidate = (entry: WordEntry): boolean =>
+	entry.statistics?.hskLevel === FREQUENCY_FALLBACK_HSK_LEVEL && Array.from(entry.simp).length > 1;
 
+/** Known words are typically 10^-2 to 10^-3 times as frequent as their rarest character. */
+const FALLBACK_FREQUENCY_FACTOR = 1e-3;
+const estimateWordFrequency = (
+	text: string,
+	charFrequencies: Map<string, number>
+): number | undefined => {
+	const frequencies = Array.from(text, (char) => charFrequencies.get(char));
+	if (!frequencies.every((it): it is number => it !== undefined)) {
+		return undefined;
+	}
+	return Math.min(...frequencies) * FALLBACK_FREQUENCY_FACTOR;
+};
+
+const parseWord = (entry: WordEntry, wordFrequency: number): Word => {
 	const pinyins = new Set(
 		entry.items.flatMap((it) => (it.pinyin === undefined ? [] : [it.pinyin.replaceAll('​', ' ')]))
 	);
@@ -356,6 +368,12 @@ const cleanupEnglish = (english: NonEmpty<string>): NonEmpty<string> | undefined
 export default async (dictionaryPath: string): Promise<StrokedDictEntry[]> => {
 	const chars: StrokedHanzi[] = [];
 	const words: Map<string, Word> = new Map();
+	const wordsWithoutFrequency: WordEntry[] = [];
+
+	const addWord = (word: Word): void => {
+		const existing = words.get(word.text);
+		words.set(word.text, existing === undefined ? word : mergeWords(existing, word));
+	};
 
 	let lineNumber = 0;
 	const startTime = performance.now();
@@ -378,13 +396,26 @@ export default async (dictionaryPath: string): Promise<StrokedDictEntry[]> => {
 			const hanzi = parseChar(entry);
 			if (hanzi !== null) chars.push(hanzi);
 		} else {
-			const word = parseWord(entry);
-			if (word !== null) {
-				const existing = words.get(word.text);
-				words.set(word.text, existing === undefined ? word : mergeWords(existing, word));
+			const wordFrequency =
+				entry.statistics?.bookWordCountPercent ?? entry.statistics?.movieWordCountPercent;
+			if (wordFrequency !== undefined) {
+				addWord(parseWord(entry, wordFrequency));
+			} else if (isFrequencyFallbackCandidate(entry)) {
+				wordsWithoutFrequency.push(entry);
 			}
 		}
 	});
+
+	const charFrequencies = new Map(chars.map((it) => [it.text, it.charFrequency]));
+	const wordsWithFrequency = new Set(words.keys());
+	wordsWithoutFrequency
+		.filter((entry) => !wordsWithFrequency.has(entry.simp))
+		.forEach((entry) => {
+			const wordFrequency = estimateWordFrequency(entry.simp, charFrequencies);
+			if (wordFrequency !== undefined) {
+				addWord(parseWord(entry, wordFrequency));
+			}
+		});
 
 	const combinedChars = chars.map((hanzi) => {
 		const hanziWord = words.get(hanzi.text);
