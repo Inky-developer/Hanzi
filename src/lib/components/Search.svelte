@@ -18,6 +18,12 @@
 		selected: DictEntry | null;
 	} = $props();
 
+	let searchInput: HTMLInputElement;
+	export const focus = () => {
+		searchInput.focus();
+		searchInput.select();
+	};
+
 	/** Rendering every match of a one-letter query would mean thousands of nodes. */
 	const MAX_RESULTS = 100;
 	const PROMPTS: Record<
@@ -119,6 +125,7 @@
 			/>
 			<!-- svelte-ignore a11y_autofocus -->
 			<input
+				bind:this={searchInput}
 				bind:value={search.query}
 				onkeydown={onKeyDown}
 				autofocus

@@ -7,7 +7,16 @@
 	import { EMPTY_DICTIONARY } from '$lib/dictionary/dictionary';
 
 	const { entry }: { entry: DictEntry | null } = $props();
+
+	let search: Search;
+	const onKeyDown = (e: KeyboardEvent): void => {
+		if (e.key !== 'k' || !(e.ctrlKey || e.metaKey)) return;
+		e.preventDefault();
+		search.focus();
+	};
 </script>
+
+<svelte:window onkeydown={onKeyDown} />
 
 <div
 	class="flex w-full flex-col overflow-hidden rounded-2xl bg-white/80 shadow-xl ring-1 shadow-black/5 ring-paper-200/80 backdrop-blur-sm md:min-h-120 md:flex-row dark:bg-white/5 dark:shadow-black/40 dark:ring-paper-800"
@@ -15,7 +24,7 @@
 	<div
 		class="flex min-h-0 w-72 shrink-0 flex-col border-r border-paper-200 contain-size not-md:hidden dark:border-paper-800"
 	>
-		<Search selected={entry} />
+		<Search bind:this={search} selected={entry} />
 	</div>
 
 	<div class="flex min-h-0 flex-1 flex-col">
