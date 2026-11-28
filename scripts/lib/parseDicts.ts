@@ -227,6 +227,19 @@ const combineMeanings = (meanings: Meaning[]): Meaning[] => {
 	return byPinyin.values().toArray();
 };
 
+// Marks relevant keys of meaning. If a meaning as no keys marked as relevant, it will be dropped to not pollute
+// the dictionary.
+const RelevantMeaningFields: Record<keyof Meaning, boolean> = {
+	pinyin: false,
+	english: true,
+	variantOf: true,
+	countingWords: true
+};
+const isMeaningEmpty = (meaning: Meaning): boolean =>
+	(Object.keys(meaning) as (keyof Meaning)[]).every(
+		(key) => !RelevantMeaningFields[key] || meaning[key] === undefined
+	);
+
 const parseChar = (entry: Entry): StrokedHanzi | null => {
 	if (isNonHskVariant(entry) || isTraditionalOnly(entry)) {
 		return null;
@@ -341,16 +354,26 @@ const cleanupEnglish = (english: NonEmpty<string>): NonEmpty<string> | undefined
 	return nonEmpty(deduplicated);
 };
 
-const cleanupMeanings = <T extends Common>(entry: T): T => ({
-	...entry,
-	meanings: entry.meanings?.map((meaning) => ({
+const cleanupMeanings = <T extends Common>(entry: T): T => {
+	let meanings = entry.meanings?.map((meaning) => ({
 		...meaning,
 		variantOf: nonEmpty(
 			meaning.variantOf?.filter((it) => it != entry.text && !entry.traditional?.includes(it)) ?? []
 		),
 		english: meaning.english ? cleanupEnglish(meaning.english) : undefined
-	}))
-});
+	}));
+
+	// removes useless meanings, but only if there is at least one useful meaning
+	const hasMeaningWithEnglish = meanings?.find((meaning) => !isMeaningEmpty(meaning)) !== undefined;
+	if (hasMeaningWithEnglish) {
+		meanings = meanings?.filter((meaning) => !isMeaningEmpty(meaning));
+	}
+
+	return {
+		...entry,
+		meanings
+	};
+};
 
 export default async (dictionaryPath: string): Promise<StrokedDictEntry[]> => {
 	const chars: StrokedHanzi[] = [];
