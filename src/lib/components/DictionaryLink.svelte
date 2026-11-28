@@ -18,13 +18,16 @@
 {/snippet}
 
 {#if entry !== null && entry !== current}
-	{#if showRuby && entry.pinyins}
+	{@const pinyin = entry?.meanings
+		?.map((meaning) => meaning.pinyin)
+		.find((pinyin) => pinyin !== null)}
+	{#if showRuby && pinyin !== undefined}
 		<ruby>
 			{@render link(entry.text)}
 			<rp>(</rp>
 			<rt
 				class="pb-0.5 font-sans text-sm font-normal tracking-wide text-paper-700 dark:text-paper-300"
-				>{entry.pinyins[0]}</rt
+				>{pinyin}</rt
 			>
 			<rp>)</rp>
 		</ruby>

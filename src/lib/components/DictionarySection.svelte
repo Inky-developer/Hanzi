@@ -1,10 +1,11 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 
-	const { title, children }: { title: string; children: Snippet } = $props();
+	const { title, children, fullWidth }: { title: string; children: Snippet; fullWidth?: boolean } =
+		$props();
 </script>
 
-<section>
+<section class={fullWidth ? 'basis-full' : []}>
 	<h3 class="mb-1 text-xs font-medium tracking-wide text-paper-500 uppercase dark:text-paper-400">
 		{title}
 	</h3>

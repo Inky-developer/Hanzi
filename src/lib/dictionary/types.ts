@@ -8,15 +8,19 @@ export const dictEntryEq = (lhs: DictEntry, rhs: DictEntry): boolean =>
 export const dictEntrySortFrequency = (entry: DictEntry) =>
 	entry.type === 'hanzi' ? entry.charFrequency : entry.wordFrequency;
 
+export type Meaning = {
+	pinyin: string | null;
+	english?: NonEmpty<string>;
+	variantOf?: NonEmpty<string>;
+	countingWords?: NonEmpty<string>;
+};
+
 export type Common = {
 	text: string;
 	// Simplified variants always take precedence in this app.
 	// `traditional` only contains traditional variants that are different to the simplified text.
 	traditional?: NonEmpty<string>;
-	pinyins?: NonEmpty<string>;
-	english?: NonEmpty<string>;
-	variantOf?: NonEmpty<string>;
-	countingWords?: NonEmpty<string>;
+	meanings?: NonEmpty<Meaning>;
 	/**
 	 * Share of all characters (for hanzi) or all words (for words) in the book corpus.
 	 * Raw counts are not used, since the word corpus is much larger than the character corpus.

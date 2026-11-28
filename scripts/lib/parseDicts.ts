@@ -3,6 +3,7 @@ import {
 	type DictEntry,
 	dictEntrySortFrequency,
 	type Hanzi,
+	type Meaning,
 	type StrokeData,
 	type Word
 } from '../../src/lib/dictionary/types.ts';
@@ -172,8 +173,7 @@ const DEFINITION_COMMA_SPLIT = /\s*,\s*/;
 const VARIANT_DEF = /^(?:old |archaic |erhua |Japanese |Taiwan )?variant of (.*)$/i;
 // Counting words
 const CL_DEF = /^CL:(.+)$/i;
-type Definitions = { variantOf: string[]; countingWords: string[]; english: string[] };
-const parseDefinitions = (item: WordEntryItem): Definitions => {
+const parseMeaning = (item: WordEntryItem): Meaning => {
 	// The Unicode source often contains a single definition containing multiple words
 	// So we use a conservative heuristic here to split these on a best effort basis.
 	// The regex must be so conservative, so that definitions like `to receive, as communications` don't get split
@@ -203,7 +203,28 @@ const parseDefinitions = (item: WordEntryItem): Definitions => {
 		english.push(it);
 	});
 
-	return { variantOf, countingWords, english };
+	return {
+		variantOf: nonEmpty([...new Set(variantOf)]),
+		countingWords: nonEmpty([...new Set(countingWords)]),
+		english: nonEmpty([...new Set(english)]),
+		pinyin: item.pinyin?.replaceAll('​', ' ') ?? null
+	};
+};
+
+const mergeMeanings = (lhs: Meaning, rhs: Meaning): Meaning => ({
+	variantOf: merge(lhs.variantOf, rhs.variantOf),
+	countingWords: merge(lhs.countingWords, rhs.countingWords),
+	english: merge(lhs.english, rhs.english),
+	pinyin: lhs.pinyin
+});
+
+const combineMeanings = (meanings: Meaning[]): Meaning[] => {
+	const byPinyin: Map<string | null, Meaning> = new Map();
+	meanings.forEach((def) => {
+		const prev = byPinyin.get(def.pinyin);
+		byPinyin.set(def.pinyin, prev === undefined ? def : mergeMeanings(prev, def));
+	});
+	return byPinyin.values().toArray();
 };
 
 const parseChar = (entry: Entry): StrokedHanzi | null => {
@@ -224,13 +245,6 @@ const parseChar = (entry: Entry): StrokedHanzi | null => {
 		entry.statistics?.movieWordCountPercent ??
 		charFrequency;
 
-	const pinyins =
-		entry?.pinyinFrequencies?.map((it) => ({
-			text: it.pinyin,
-			frequency: it.count
-		})) ?? [];
-	pinyins.sort((a, b) => b.frequency - a.frequency);
-
 	const sourceStrokeData =
 		entry?.data ??
 		entry?.images?.find((img) => img.type === 'Regular' && img.data !== undefined)?.data;
@@ -239,29 +253,16 @@ const parseChar = (entry: Entry): StrokedHanzi | null => {
 		medians: sourceStrokeData.medians
 	};
 
-	const definitions = parseDefinitions({ definitions: entry.gloss ? [entry.gloss] : undefined });
-	const variantOf = [
-		...new Set([...definitions.variantOf, ...(entry.variantOf ? [entry.variantOf] : [])])
-	];
 	// Chars have no traditional / simplified information, that will be populated by `expandHanziWithWord`
 	return {
 		text: entry.char,
 		wordFrequency,
 		charFrequency,
-		pinyins: nonEmpty(pinyins.map((it) => it.text)),
-		english: nonEmpty(definitions.english),
-		variantOf: nonEmpty(variantOf),
 		characterHint: entry?.hint ?? '',
 		hskLevel: mapHSK(entry?.statistics?.hskLevel),
 		strokeData
 	};
 };
-
-const combineDefinitions = (definitions: Definitions[]): Definitions => ({
-	variantOf: [...new Set(definitions.flatMap((it) => it.variantOf))],
-	countingWords: [...new Set(definitions.flatMap((it) => it.countingWords))],
-	english: [...new Set(definitions.flatMap((it) => it.english))]
-});
 
 const FREQUENCY_FALLBACK_HSK_LEVEL = 1;
 /** Words that are not part of the frequency corpora, but are common enough to be kept with an estimated frequency. */
@@ -282,27 +283,18 @@ const estimateWordFrequency = (
 };
 
 const parseWord = (entry: WordEntry, wordFrequency: number): Word => {
-	const pinyins = new Set(
-		entry.items.flatMap((it) => (it.pinyin === undefined ? [] : [it.pinyin.replaceAll('​', ' ')]))
-	);
-
 	const preferredSource = 'cedict';
-	const definitions = combineDefinitions(
-		entry.items.filter((it) => it.source === preferredSource).map((it) => parseDefinitions(it))
+	let meanings = combineMeanings(
+		entry.items.filter((it) => it.source === preferredSource).map((it) => parseMeaning(it))
 	);
-	if (definitions.english.length === 0) {
-		definitions.english = combineDefinitions(
-			entry.items.flatMap((it) => parseDefinitions(it))
-		).english;
+	if (meanings.every((def) => def.english === undefined)) {
+		meanings = combineMeanings(entry.items.flatMap((it) => parseMeaning(it)));
 	}
 
 	return {
 		text: entry.simp,
 		traditional: entry.trad === entry.simp ? undefined : [entry.trad],
-		pinyins: nonEmpty([...pinyins]),
-		english: nonEmpty(definitions.english),
-		variantOf: nonEmpty(definitions.variantOf),
-		countingWords: nonEmpty(definitions.countingWords),
+		meanings: nonEmpty(meanings),
 		wordFrequency,
 		hskLevel: mapHSK(entry.statistics?.hskLevel)
 	};
@@ -315,21 +307,14 @@ const merge = <T>(
 	lhs: NonEmpty<T> | undefined,
 	rhs: NonEmpty<T> | undefined
 ): NonEmpty<T> | undefined =>
-	lhs === undefined
-		? rhs
-		: rhs === undefined
-			? lhs
-			: nonEmpty([...new Set([...lhs, ...rhs])]);
+	lhs === undefined ? rhs : rhs === undefined ? lhs : nonEmpty([...new Set([...lhs, ...rhs])]);
 
 // Sometimes words are duplicated and only differ in the traditional text.
 // Their frequency statistics are the same, so the frequencies shouldn't be added.
 const mergeWords = (lhs: Word, rhs: Word): Word => ({
 	text: lhs.text,
 	traditional: merge(lhs.traditional, rhs.traditional),
-	pinyins: merge(lhs.pinyins, rhs.pinyins),
-	english: merge(lhs.english, rhs.english),
-	variantOf: merge(lhs.variantOf, rhs.variantOf),
-	countingWords: merge(lhs.countingWords, rhs.countingWords),
+	meanings: nonEmpty(combineMeanings([...(lhs.meanings ?? []), ...(rhs.meanings ?? [])])),
 	wordFrequency: Math.max(lhs.wordFrequency, rhs.wordFrequency),
 	hskLevel: minIgnoringUndefined(lhs.hskLevel, rhs.hskLevel)
 });
@@ -341,19 +326,10 @@ const expandHanziWithWord = (hanzi: StrokedHanzi, word: Word): StrokedHanzi => {
 	return {
 		...hanzi,
 		traditional: merge(word.traditional, hanzi.traditional),
-		english: merge(word.english, hanzi.english),
-		variantOf: merge(word.variantOf, hanzi.variantOf),
-		countingWords: merge(word.countingWords, hanzi.countingWords),
+		meanings: nonEmpty(combineMeanings([...(word.meanings ?? []), ...(hanzi.meanings ?? [])])),
 		wordFrequency: Math.max(hanzi.wordFrequency, word.wordFrequency)
 	};
 };
-
-const removeSelfVariants = <T extends Common>(entry: T): T => ({
-	...entry,
-	variantOf: nonEmpty(
-		entry.variantOf?.filter((it) => it !== entry.text && !entry.traditional?.includes(it)) ?? []
-	)
-});
 
 const cleanupEnglish = (english: NonEmpty<string>): NonEmpty<string> | undefined => {
 	const set = new Set(english);
@@ -364,6 +340,17 @@ const cleanupEnglish = (english: NonEmpty<string>): NonEmpty<string> | undefined
 		.toArray();
 	return nonEmpty(deduplicated);
 };
+
+const cleanupMeanings = <T extends Common>(entry: T): T => ({
+	...entry,
+	meanings: entry.meanings?.map((meaning) => ({
+		...meaning,
+		variantOf: nonEmpty(
+			meaning.variantOf?.filter((it) => it != entry.text && !entry.traditional?.includes(it)) ?? []
+		),
+		english: meaning.english ? cleanupEnglish(meaning.english) : undefined
+	}))
+});
 
 export default async (dictionaryPath: string): Promise<StrokedDictEntry[]> => {
 	const chars: StrokedHanzi[] = [];
@@ -423,20 +410,16 @@ export default async (dictionaryPath: string): Promise<StrokedDictEntry[]> => {
 		return expandHanziWithWord(hanzi, hanziWord);
 	});
 
-	let entries = [
+	const entries = [
 		...combinedChars.map((it): StrokedDictEntry => ({
 			type: 'hanzi',
-			...removeSelfVariants(it)
+			...cleanupMeanings(it)
 		})),
 		...words
 			.values()
 			.filter((it) => Array.from(it.text).length > 1)
-			.map((it): StrokedDictEntry => ({ type: 'word', ...removeSelfVariants(it) }))
+			.map((it): StrokedDictEntry => ({ type: 'word', ...cleanupMeanings(it) }))
 	];
-	entries = entries.map((entry) => ({
-		...entry,
-		english: entry.english ? cleanupEnglish(entry.english) : undefined
-	}));
 	entries.sort((a, b) => dictEntrySortFrequency(b) - dictEntrySortFrequency(a));
 
 	console.log(`Finished in ${(performance.now() - startTime) / 1000} s`);

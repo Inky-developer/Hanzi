@@ -11,6 +11,17 @@
 	const hanzis = $derived(Array.from(entry.text));
 </script>
 
+{#snippet labeledHanziList(label: string, items: string[])}
+	<div class="flex flex-wrap items-baseline gap-x-1.5">
+		<span class="font-sans text-xs text-paper-500 dark:text-paper-400">{label}</span>
+		<SeparatedList {items}>
+			{#snippet item(text)}
+				<ClickableHanziText {text} current={entry} />
+			{/snippet}
+		</SeparatedList>
+	</div>
+{/snippet}
+
 <article class="flex min-h-0 flex-col">
 	<header class="border-b border-paper-100 px-6 py-4 dark:border-paper-800">
 		<div class="flex flex-wrap items-baseline justify-center gap-x-3 gap-y-1">
@@ -42,56 +53,48 @@
 			</DictionarySection>
 		{/if}
 
-		{#if entry.pinyins}
-			<DictionarySection title="Pinyin">
-				<SeparatedList items={entry.pinyins}>
-					{#snippet item(pinyin)}
-						{pinyin}
-					{/snippet}
-				</SeparatedList>
+		{#if entry.hskLevel !== undefined}
+			<DictionarySection title="HSK level">
+				{entry.hskLevel}
 			</DictionarySection>
 		{/if}
 
-		{#if entry.variantOf}
-			<DictionarySection title="Variant of">
-				<SeparatedList items={entry.variantOf}>
-					{#snippet item(variant)}
-						<ClickableHanziText text={variant} current={entry} />
-					{/snippet}
-				</SeparatedList>
-			</DictionarySection>
-		{/if}
-
-		{#if entry.countingWords}
-			{@const title = entry.countingWords.length === 1 ? 'Counting word' : 'Counting words'}
-			<DictionarySection {title}>
-				<SeparatedList items={entry.countingWords}>
-					{#snippet item(word)}
-						<ClickableHanziText text={word} current={entry} />
-					{/snippet}
-				</SeparatedList>
-			</DictionarySection>
-		{/if}
-
-		{#if entry.english}
-			<DictionarySection title="Meanings">
-				<SeparatedList items={entry.english} lang="en" class="font-serif italic">
-					{#snippet item(english)}
-						<ClickableHanziText text={english} current={entry} />
-					{/snippet}
-				</SeparatedList>
+		{#if entry.meanings}
+			<DictionarySection title="Meanings" fullWidth>
+				<ol class="flex flex-col gap-3">
+					{#each entry.meanings as meaning, index (index)}
+						<li class="flex flex-col gap-0.5">
+							{#if meaning.pinyin !== null}
+								<span
+									class="font-sans text-sm font-medium tracking-wide text-paper-900 dark:text-paper-100"
+								>
+									{meaning.pinyin}
+								</span>
+							{/if}
+							{#if meaning.english}
+								<SeparatedList items={meaning.english} lang="en" class="italic">
+									{#snippet item(english)}
+										<ClickableHanziText text={english} current={entry} />
+									{/snippet}
+								</SeparatedList>
+							{/if}
+							{#if meaning.variantOf}
+								{@render labeledHanziList('Variant of', meaning.variantOf)}
+							{/if}
+							{#if meaning.countingWords}
+								{@const label =
+									meaning.countingWords.length === 1 ? 'Counting word' : 'Counting words'}
+								{@render labeledHanziList(label, meaning.countingWords)}
+							{/if}
+						</li>
+					{/each}
+				</ol>
 			</DictionarySection>
 		{/if}
 
 		{#if entry.type === 'hanzi' && entry.characterHint.length > 0}
-			<DictionarySection title="Glossary">
+			<DictionarySection title="Glossary" fullWidth>
 				<ClickableHanziText text={entry.characterHint} current={entry} />
-			</DictionarySection>
-		{/if}
-
-		{#if entry.hskLevel !== undefined}
-			<DictionarySection title="HSK level">
-				{entry.hskLevel}
 			</DictionarySection>
 		{/if}
 	</div>

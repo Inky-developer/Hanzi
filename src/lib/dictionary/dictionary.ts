@@ -45,9 +45,22 @@ export class Dictionary {
 	};
 
 	private buildPinyinIndex = (): Index[] =>
-		this.buildIndex((entry) => entry.pinyins?.map((it) => normalizePinyinSearch(it)) ?? []);
+		this.buildIndex(
+			(entry) =>
+				entry.meanings
+					?.map((meaning) =>
+						meaning.pinyin !== null ? normalizePinyinSearch(meaning.pinyin) : null
+					)
+					.filter((pinyin): pinyin is string => pinyin !== null) ?? []
+		);
 	private buildEnglishIndex = (): Index[] =>
-		this.buildIndex((entry) => entry.english?.map((it) => normalizeEnglishSearch(it)) ?? []);
+		this.buildIndex((entry) => [
+			...new Set(
+				entry.meanings?.flatMap(
+					(meaning) => meaning.english?.map((it) => normalizeEnglishSearch(it)) ?? []
+				) ?? []
+			)
+		]);
 
 	private getPinyinIndex = (): Index[] => (this.pinyinIndex ??= this.buildPinyinIndex());
 	private getEnglishIndex = (): Index[] => (this.englishIndex ??= this.buildEnglishIndex());
