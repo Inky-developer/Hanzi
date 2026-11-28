@@ -7,7 +7,7 @@
 	} from '$lib/dictionary/dictionary';
 	import { type DictEntry, dictEntryEq } from '$lib/dictionary/types';
 	import { getSearchState, SEARCH_MODES, type SearchMode } from '$lib/state/searchState.svelte';
-	import { goto } from '$app/navigation';
+	import { afterNavigate, goto } from '$app/navigation';
 	import { Search as SearchIcon } from '@lucide/svelte';
 	import { dictionary } from '$lib/state/dictionaryState.svelte';
 	import { getEntryURL } from '$lib/state/getEntryURLState.svelte';
@@ -23,6 +23,9 @@
 		searchInput.focus();
 		searchInput.select();
 	};
+	afterNavigate(() => {
+		searchInput.select();
+	});
 
 	/** Rendering every match of a one-letter query would mean thousands of nodes. */
 	const MAX_RESULTS = 100;
