@@ -8,7 +8,7 @@ import {
 	type Word
 } from '../../src/lib/dictionary/types.ts';
 import readLines from './readLines.ts';
-import { type NonEmpty, nonEmpty } from '../../src/lib/utils/types.ts';
+import { isNonEmpty, type NonEmpty, nonEmpty } from '../../src/lib/utils/types.ts';
 
 type StrokedHanzi = Hanzi & { strokeData?: StrokeData };
 
@@ -185,7 +185,6 @@ const parseMeaning = (item: WordEntryItem): Meaning => {
 	const countingWords: string[] = [];
 	const english: string[] = [];
 
-	// TODO: Handle counting words
 	items.forEach((it) => {
 		const cl_match = it.match(CL_DEF);
 		if (cl_match !== null) {
@@ -354,7 +353,31 @@ const cleanupEnglish = (english: NonEmpty<string>): NonEmpty<string> | undefined
 	return nonEmpty(deduplicated);
 };
 
-const cleanupMeanings = <T extends Common>(entry: T): T => {
+/**
+ * Sorts the most important meanings first
+ */
+const sortMeanings = (
+	meanings: Meaning[],
+	pinyinCounts: Map<string, number> | undefined
+): Meaning[] => {
+	const usageCount = (meaning: Meaning) =>
+		(meaning.pinyin !== null ? pinyinCounts?.get(meaning.pinyin.toLowerCase()) : undefined) ?? 0;
+	const isProperNoun = (meaning: Meaning) =>
+		meaning.pinyin !== null && meaning.pinyin !== meaning.pinyin.toLowerCase();
+	const definitionCount = (meaning: Meaning) => meaning.english?.length ?? 0;
+
+	return meanings.toSorted(
+		(a, b) =>
+			usageCount(b) - usageCount(a) ||
+			Number(isProperNoun(a)) - Number(isProperNoun(b)) ||
+			definitionCount(b) - definitionCount(a)
+	);
+};
+
+const cleanupMeanings = <T extends Common>(
+	entry: T,
+	pinyinCounts: Map<string, number> | undefined
+): T => {
 	let meanings = entry.meanings?.map((meaning) => ({
 		...meaning,
 		variantOf: nonEmpty(
@@ -369,9 +392,14 @@ const cleanupMeanings = <T extends Common>(entry: T): T => {
 		meanings = meanings?.filter((meaning) => !isMeaningEmpty(meaning));
 	}
 
+	const sorted =
+		meanings !== undefined && isNonEmpty(meanings)
+			? nonEmpty(sortMeanings(meanings, pinyinCounts))
+			: undefined;
+
 	return {
 		...entry,
-		meanings
+		meanings: sorted
 	};
 };
 
@@ -379,6 +407,8 @@ export default async (dictionaryPath: string): Promise<StrokedDictEntry[]> => {
 	const chars: StrokedHanzi[] = [];
 	const words: Map<string, Word> = new Map();
 	const wordsWithoutFrequency: WordEntry[] = [];
+	// char -> lowercase pinyin -> usage count
+	const pinyinCounts: Map<string, Map<string, number>> = new Map();
 
 	const addWord = (word: Word): void => {
 		const existing = words.get(word.text);
@@ -404,7 +434,15 @@ export default async (dictionaryPath: string): Promise<StrokedDictEntry[]> => {
 
 		if ('char' in entry) {
 			const hanzi = parseChar(entry);
-			if (hanzi !== null) chars.push(hanzi);
+			if (hanzi !== null) {
+				chars.push(hanzi);
+				if (entry.pinyinFrequencies !== undefined) {
+					pinyinCounts.set(
+						entry.char,
+						new Map(entry.pinyinFrequencies.map((it) => [it.pinyin.toLowerCase(), it.count]))
+					);
+				}
+			}
 		} else {
 			const wordFrequency =
 				entry.statistics?.bookWordCountPercent ?? entry.statistics?.movieWordCountPercent;
@@ -436,12 +474,15 @@ export default async (dictionaryPath: string): Promise<StrokedDictEntry[]> => {
 	const entries = [
 		...combinedChars.map((it): StrokedDictEntry => ({
 			type: 'hanzi',
-			...cleanupMeanings(it)
+			...cleanupMeanings(it, pinyinCounts.get(it.text))
 		})),
 		...words
 			.values()
 			.filter((it) => Array.from(it.text).length > 1)
-			.map((it): StrokedDictEntry => ({ type: 'word', ...cleanupMeanings(it) }))
+			.map((it): StrokedDictEntry => ({
+				type: 'word',
+				...cleanupMeanings(it, undefined)
+			}))
 	];
 	entries.sort((a, b) => dictEntrySortFrequency(b) - dictEntrySortFrequency(a));
 
