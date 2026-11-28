@@ -318,7 +318,7 @@ const merge = <T>(
 	lhs === undefined
 		? rhs
 		: rhs === undefined
-			? undefined
+			? lhs
 			: nonEmpty([...new Set([...lhs, ...rhs])]);
 
 // Sometimes words are duplicated and only differ in the traditional text.
